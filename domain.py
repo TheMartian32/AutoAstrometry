@@ -3,6 +3,8 @@ from astroquery.astrometry_net import AstrometryNet
 from rich import print
 import shutil
 import os
+import webbrowser
+import time
 
 
 def ask_for(prompt, error_msg=None, _type=None):
@@ -38,13 +40,13 @@ def domain():
             '\nWhat is the directory of the FITS file? (Make sure file ends in .FITS, .JPEG or .PNG): ', 'Error', str)
 
         # * If the the file ends with the desired type
-        if fits_dir.endswith('.FITS' or '.JPEG' or '.PNG'):
+        if fits_dir.endswith('.FITS' or '.JPEG' or '.PNG' or '.FIT' or '.fits' or '.fit'):
             look_for = False
             break
         else:
             print('\nSorry, the file format you gave is incorrect.')
             fits_dir = ask_for(
-                '\nWhat is the directory of the FITS file? (Make sure file ends in .fits): ', 'Error', str)
+                '\nWhat is the directory of the FITS file? (Make sure file ends in .FITS, .JPEG or .PNG): ', 'Error', str)
 
     # * Creating instance of astrometry.net
     ast = AstrometryNet()
@@ -74,6 +76,13 @@ def domain():
         print('\n[green]Success![/green]')
         print('\nTo get more information of your image, '
               'please go to this URL: [blue]http://nova.astrometry.net/users/20995[/blue]')
+
+        # * Telling user that they are currently being redirected to website.
+        print('\nRedirecting you to [bold]website[/bold].')
+        time.sleep(5)
+
+        # * Opening URL
+        webbrowser.open('http://nova.astrometry.net/users/20995')
     else:
         #! Code to execute when solve fails
         print('\n[bold red]Failed[/bold red] to solve.')
