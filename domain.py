@@ -1,7 +1,6 @@
 # * Imports
 from astroquery.astrometry_net import AstrometryNet
 from rich import print
-import shutil
 import os
 import webbrowser
 import time
@@ -26,27 +25,22 @@ def ask_for(prompt, error_msg=None, _type=None):
         return inp
 
 
-def domain():
-
-    print('\n********************'
-          ' Beginning of plate solving '
-          '********************')
+def upload():
 
     look_for = True
 
     while look_for:
         # * Asks for the directory of the FITS file.
         fits_dir = ask_for(
-            '\nWhat is the directory of the FITS file? (Make sure file ends in .FITS, .JPEG or .PNG): ', 'Error', str)
+            '\nWhat is the path to the FITS file? (Make sure file ends in .FITS, .JPEG or .PNG): ', 'Error', str)
 
         # * If the the file ends with the desired type
-        if fits_dir.endswith('.FITS' or '.JPEG' or '.PNG' or '.FIT' or '.fits' or '.fit'):
+        if fits_dir.endswith('.FITS' or '.JPEG' or '.PNG' or '.FIT' or '.fits' or '.fit' or '.fts'):
             look_for = False
             break
         else:
-            print('\nSorry, the file format you gave is incorrect.')
-            fits_dir = ask_for(
-                '\nWhat is the directory of the FITS file? (Make sure file ends in .FITS, .JPEG or .PNG): ', 'Error', str)
+            # * Tells user that the file extension that was at the end of their file was incorrect. It then repeats this loop.
+            print('\nSorry, the file extension you gave is incorrect.')
 
     # * Creating instance of astrometry.net
     ast = AstrometryNet()
@@ -63,7 +57,7 @@ def domain():
             else:
                 # * Time is in seconds.
                 wcs_header = ast.monitor_submission(submission_id,
-                                                    solve_timeout=1200)
+                                                    solve_timeout=900)
         except TimeoutError as e:
             submission_id = e.args[1]
             print('\nThere was a timeout error. ( Process took to long ).')
@@ -79,13 +73,35 @@ def domain():
 
         # * Telling user that they are currently being redirected to website.
         print('\nRedirecting you to [bold]website[/bold].')
-        time.sleep(5)
+        time.sleep(10)
 
         # * Opening URL
         webbrowser.open('http://nova.astrometry.net/users/20995')
     else:
         #! Code to execute when solve fails
         print('\n[bold red]Failed[/bold red] to solve.')
+
+
+def domain():
+
+    print('\n********************'
+          ' [blue]Beginning of plate solving[/blue] '
+          '********************')
+
+    how_many = ask_for(
+        '\nDo you have more than one file that needs to be plate solved? (y/n): ', 'Error', str).lower()
+
+    if how_many == 'n':
+        # * Uploads one file
+        upload()
+
+    elif how_many == 'y':
+        num_files = ask_for(
+            '\nHow many files do you have that need to be uploaded?: ', 'Not the right data type.',_type=int)
+
+        for i in range(num_files):
+            # * For every file the user needs to upload, it calls the upload function.
+            upload()
 
 
 if __name__ == "__main__":
@@ -99,5 +115,5 @@ if __name__ == "__main__":
         domain()
     if repeat == 'n':
         print('\n********************'
-              ' End of plate solving '
+              ' [blue]End of plate solving[/blue] '
               '********************')
