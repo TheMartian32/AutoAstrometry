@@ -26,6 +26,11 @@ def ask_for(prompt, error_msg=None, _type=None):
 
 
 def upload():
+    """
+    Using astroquery it asks the user for the
+    FITS file then it uploads that file to nova.astronometry.net
+    then it solves the image, then redirects the user to the website.
+    """
 
     look_for = True
 
@@ -73,9 +78,11 @@ def upload():
 
         # * Telling user that they are currently being redirected to website.
         print('\nRedirecting you to [bold]website[/bold].')
-        time.sleep(10)
+        time.sleep(5)
 
         # * Opening URL
+        #! If you are using this script please sign up for an account,
+        #! then click on your images, then copy that URL and paste it here.
         webbrowser.open('http://nova.astrometry.net/users/20995')
     else:
         #! Code to execute when solve fails
@@ -83,6 +90,10 @@ def upload():
 
 
 def domain():
+    """
+    Using the upload function, it asks the user how many files they need to upload
+    then it loops over the upload function for every file you have.
+    """
 
     print('\n********************'
           ' [blue]Beginning of plate solving[/blue] '
@@ -97,7 +108,7 @@ def domain():
 
     elif how_many == 'y':
         num_files = ask_for(
-            '\nHow many files do you have that need to be uploaded?: ', 'Not the right data type.',_type=int)
+            '\nHow many files do you have that need to be uploaded?: ', 'Not the right data type.', _type=int)
 
         for i in range(num_files):
             # * For every file the user needs to upload, it calls the upload function.
