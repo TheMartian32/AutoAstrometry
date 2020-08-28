@@ -41,9 +41,12 @@ def upload():
             '\nWhat is the path to the FITS file? (Make sure file ends in .FITS, .JPEG or .PNG): ', 'Error', str)
 
         # * If the the file ends with the desired type
-        if fits_dir.endswith('.FITS' or '.JPEG' or '.PNG' or '.FIT' or '.fits' or '.fit' or '.fts'):
+        file_types = ['.FITS', '.JPEG', '.PNG',
+                      '.FIT', '.fits', '.fit', '.fts']
+        if fits_dir.endswith(tuple(file_types)):
             look_for = False
             break
+
         else:
             # * Tells user that the file extension that was at the end of their file was incorrect. It then repeats this loop.
             print('\nSorry, the file extension you gave is incorrect.')
@@ -96,6 +99,9 @@ def upload():
                 '\nWhat is the [bold]name[/bold] of your [blue]target[/blue]?')
             target_name = ask_for('\n: ')
 
+            print('\nLooking up target...')
+            time.sleep(2.5)
+
             # * Opening SIMBAD URL.
             browser = webdriver.Safari()
             browser.get('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
@@ -108,7 +114,7 @@ def upload():
             python_button.click()
 
         elif redirect_simbad == 'n':
-            print('Continuing...')
+            print('\nContinuing...')
     else:
         #! Code to execute when solve fails
         print('\n[bold red]Failed[/bold red] to solve.')
@@ -121,23 +127,28 @@ def domain():
     """
 
     print('\n********************'
-          ' [blue]Beginning of plate solving[/blue] '
+          ' [blue]Beginning of Plate Solving[/blue] '
           '********************')
 
-    how_many = ask_for(
-        '\nDo you have more than one file that needs to be plate solved? (y/n): ', 'Error', str).lower()
+    # * While the prompt isnt y or n it repeats it
+    invalid = True
+    while invalid:
+        how_many = ask_for(
+            '\nDo you have more than one file that needs to be plate solved? (y/n): ', 'Error', str).lower()
 
-    if how_many == 'n':
-        # * Uploads one file
-        upload()
+        if how_many == 'y':
+            num_files = ask_for(
+                '\nHow many files do you have that need to be uploaded?: ', 'Not the right data type.', _type=int)
 
-    elif how_many == 'y':
-        num_files = ask_for(
-            '\nHow many files do you have that need to be uploaded?: ', 'Not the right data type.', _type=int)
+            for i in range(num_files):
+                # * For every file the user needs to upload, it calls the upload function.
+                upload()
+                invalid = False
 
-        for i in range(num_files):
-            # * For every file the user needs to upload, it calls the upload function.
+        elif how_many == 'n':
+            # * Uploads only one file.
             upload()
+            invalid = False
 
 
 if __name__ == "__main__":
@@ -151,5 +162,5 @@ if __name__ == "__main__":
         domain()
     if repeat == 'n':
         print('\n********************'
-              ' [blue]End of plate solving[/blue] '
+              ' [blue]End of Plate Solving[/blue] '
               '********************')
