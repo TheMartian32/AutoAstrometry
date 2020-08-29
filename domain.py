@@ -1,3 +1,4 @@
+
 # * Imports
 from astroquery.astrometry_net import AstrometryNet
 from rich import print
@@ -103,11 +104,17 @@ def upload():
             time.sleep(2.5)
 
             # * Opening SIMBAD URL.
+
             browser = webdriver.Safari()
             browser.get('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
+
+            # * Finding search bar, then typing in the target name.
+
             python_button = browser.find_element_by_xpath(
                 "/html/body/div[3]/div/form/table/tbody/tr[1]/td[2]/input")
             python_button.send_keys(f'{target_name}')
+
+            # * Finds search button and clicks it.
 
             python_button = browser.find_element_by_xpath(
                 "/html/body/div[3]/div/form/table/tbody/tr[3]/td[2]/input[1]")
@@ -115,6 +122,20 @@ def upload():
 
         elif redirect_simbad == 'n':
             print('\nContinuing...')
+
+        invalid = True
+        while invalid:
+            print(
+                '\nWould you like to be redirected to the [blue]NASA Exoplanet Archive[/blue]?')
+            redirect_NEA = ask_for('(Y/N)\n: ',_type=str).lower()
+
+            if redirect_NEA == 'y':
+                webbrowser.open_new_tab('https://exoplanetarchive.ipac.caltech.edu')
+                invalid = False
+            elif redirect_NEA == 'n':
+                print('\nContinuing...')
+                invalid = False
+
     else:
         #! Code to execute when solve fails
         print('\n[bold red]Failed[/bold red] to solve.')
