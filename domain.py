@@ -127,10 +127,11 @@ def upload():
         while invalid:
             print(
                 '\nWould you like to be redirected to the [blue]NASA Exoplanet Archive[/blue]?')
-            redirect_NEA = ask_for('(Y/N)\n: ',_type=str).lower()
+            redirect_NEA = ask_for('(Y/N)\n: ', _type=str).lower()
 
             if redirect_NEA == 'y':
-                webbrowser.open_new_tab('https://exoplanetarchive.ipac.caltech.edu')
+                webbrowser.open_new_tab(
+                    'https://exoplanetarchive.ipac.caltech.edu')
                 invalid = False
             elif redirect_NEA == 'n':
                 print('\nContinuing...')
@@ -173,6 +174,13 @@ def domain():
 
 
 if __name__ == "__main__":
+    print('\n--------------------------------------------------------------------------')
+    print('To use this software please register for an account '
+          'on nova.astrometry.net')
+    print('--------------------------------------------------------------------------')
+
+    time.sleep(1.5)
+
     domain()
 
     print('Do you have any [light blue]more images[/light blue] to be plate solved? '
