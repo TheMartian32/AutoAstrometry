@@ -1,10 +1,9 @@
 
 # * Imports
-from astroquery.astrometry_net import AstrometryNet
-from rich import print
-import os
 import webbrowser
 import time
+from astroquery.astrometry_net import AstrometryNet
+from rich import print
 from selenium import webdriver
 
 
@@ -27,6 +26,64 @@ def ask_for(prompt, error_msg=None, _type=None):
         return inp
 
 
+def simbad():
+    """
+    Redirects user to SIMBAD Search Portal.
+    """
+    print(
+        '\nWould you like to be [bold]redirected[/bold] to the [blue]SIMBAD search portal[/blue]?')
+    redirect_simbad = ask_for('(Y/N): ').lower()
+
+    if redirect_simbad == 'y':
+        # * Getting name of target to enter into SIMBAD search portal
+        print(
+            '\nWhat is the [bold]name[/bold] of your [blue]target[/blue]?')
+        target_name = ask_for(': ')
+
+        print('\nLooking up target...')
+        time.sleep(2.5)
+
+        # * Opening SIMBAD URL.
+
+        #! Change this if you aren't using Safari
+        browser = webdriver.Safari()
+        browser.get('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
+
+        # * Finding search bar, then typing in the target name.
+
+        python_button = browser.find_element_by_xpath(
+            "/html/body/div[3]/div/form/table/tbody/tr[1]/td[2]/input")
+        python_button.send_keys(f'{target_name}')
+
+        # * Finds search button and clicks it.
+
+        python_button = browser.find_element_by_xpath(
+            "/html/body/div[3]/div/form/table/tbody/tr[3]/td[2]/input[1]")
+        python_button.click()
+
+    elif redirect_simbad == 'n':
+        print('\nContinuing...')
+
+
+def NEA():
+    """
+    Redirects the user to the NASA Exoplanet Archive.
+    """
+    invalid = True
+    while invalid:
+        print(
+            '\nWould you like to be redirected to the [blue]NASA Exoplanet Archive[/blue]?')
+        redirect_NEA = ask_for('(Y/N): ', _type=str).lower()
+
+        if redirect_NEA == 'y':
+            webbrowser.open_new_tab(
+                'https://exoplanetarchive.ipac.caltech.edu')
+            invalid = False
+        elif redirect_NEA == 'n':
+            print('\nContinuing...')
+            invalid = False
+
+
 def upload():
     """
     Using astroquery it asks the user for the
@@ -39,18 +96,19 @@ def upload():
     while look_for:
         # * Asks for the directory of the FITS file.
         fits_dir = ask_for(
-            '\nWhat is the path to the FITS file? (Make sure file ends in .FITS, .JPEG or .PNG): ', 'Error', str)
+            '\nWhat is the path to the FITS file? '
+            '(Make sure file ends in .FITS, .JPEG or .PNG): ', 'Error', str)
 
         # * If the the file ends with the desired type
         file_types = ['.FITS', '.JPEG', '.PNG',
                       '.FIT', '.fits', '.fit', '.fts']
         if fits_dir.endswith(tuple(file_types)):
             look_for = False
-            break
 
         else:
             # * Tells user that the file extension that was at the end of their file was incorrect. It then repeats this loop.
-            print('\nSorry, the file extension you gave is incorrect.')
+            print(
+                'Sorry, the [bold white]file[/bold white] you gave is [red]incorrect[/red].')
 
     # * Creating instance of astrometry.net
     ast = AstrometryNet()
@@ -90,53 +148,11 @@ def upload():
         #! then click on your images, then copy that URL and paste it here.
         webbrowser.open('http://nova.astrometry.net/users/20995')
 
-        print(
-            '\nWould you like to be [bold]redirected[/bold] to the [blue]SIMBAD search portal[/blue]?')
-        redirect_simbad = ask_for('(Y/N): ').lower()
+        # * Looks up target on SIMBAD search portal
+        simbad()
 
-        if redirect_simbad == 'y':
-            # * Getting name of target to enter into SIMBAD search portal
-            print(
-                '\nWhat is the [bold]name[/bold] of your [blue]target[/blue]?')
-            target_name = ask_for('\n: ')
-
-            print('\nLooking up target...')
-            time.sleep(2.5)
-
-            # * Opening SIMBAD URL.
-
-            browser = webdriver.Safari()
-            browser.get('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
-
-            # * Finding search bar, then typing in the target name.
-
-            python_button = browser.find_element_by_xpath(
-                "/html/body/div[3]/div/form/table/tbody/tr[1]/td[2]/input")
-            python_button.send_keys(f'{target_name}')
-
-            # * Finds search button and clicks it.
-
-            python_button = browser.find_element_by_xpath(
-                "/html/body/div[3]/div/form/table/tbody/tr[3]/td[2]/input[1]")
-            python_button.click()
-
-        elif redirect_simbad == 'n':
-            print('\nContinuing...')
-
-        invalid = True
-        while invalid:
-            print(
-                '\nWould you like to be redirected to the [blue]NASA Exoplanet Archive[/blue]?')
-            redirect_NEA = ask_for('(Y/N)\n: ', _type=str).lower()
-
-            if redirect_NEA == 'y':
-                webbrowser.open_new_tab(
-                    'https://exoplanetarchive.ipac.caltech.edu')
-                invalid = False
-            elif redirect_NEA == 'n':
-                print('\nContinuing...')
-                invalid = False
-
+        # * Redirects to the NASA exoplanet archive
+        NEA()
     else:
         #! Code to execute when solve fails
         print('\n[bold red]Failed[/bold red] to solve.')
@@ -161,11 +177,15 @@ def domain():
         if how_many == 'y':
             num_files = ask_for(
                 '\nHow many files do you have that need to be uploaded?: ', 'Not the right data type.', _type=int)
+            if num_files > 15:
+                print(
+                    'Sorry, the [red]number of files[/red] cannot be over 15.')
 
-            for i in range(num_files):
-                # * For every file the user needs to upload, it calls the upload function.
-                upload()
-                invalid = False
+            elif num_files <= 15:
+                for _ in range(num_files):
+                    # * For every file the user needs to upload, it calls the upload function.
+                    upload()
+                    invalid = False
 
         elif how_many == 'n':
             # * Uploads only one file.
@@ -183,7 +203,7 @@ if __name__ == "__main__":
 
     domain()
 
-    print('Do you have any [light blue]more images[/light blue] to be plate solved? '
+    print('\nDo you have any [light blue]more images[/light blue] to be plate solved? '
           '([green]Y[/green]/[red]N[/red])')
     repeat = ask_for('\n: ', 'Error', str).lower()
 
