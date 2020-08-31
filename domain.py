@@ -26,60 +26,17 @@ def ask_for(prompt, error_msg=None, _type=None):
         return inp
 
 
-def simbad():
-    """
-    Redirects user to SIMBAD Search Portal.
-    """
-    print(
-        '\nWould you like to be [bold]redirected[/bold] to the [blue]SIMBAD search portal[/blue]?')
-    redirect_simbad = ask_for('(Y/N): ').lower()
-
-    if redirect_simbad == 'y':
-        # * Getting name of target to enter into SIMBAD search portal
-        print(
-            '\nWhat is the [bold]name[/bold] of your [blue]target[/blue]?')
-        target_name = ask_for(': ')
-
-        print('\nLooking up target...')
-        time.sleep(2.5)
-
-        # * Opening SIMBAD URL.
-
-        #! Change this if you aren't using Safari
-        browser = webdriver.Safari()
-        browser.get('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
-
-        # * Finding search bar, then typing in the target name.
-
-        python_button = browser.find_element_by_xpath(
-            "/html/body/div[3]/div/form/table/tbody/tr[1]/td[2]/input")
-        python_button.send_keys(f'{target_name}')
-
-        # * Finds search button and clicks it.
-
-        python_button = browser.find_element_by_xpath(
-            "/html/body/div[3]/div/form/table/tbody/tr[3]/td[2]/input[1]")
-        python_button.click()
-
-    elif redirect_simbad == 'n':
-        print('\nContinuing...')
-
-
-def NEA():
-    """
-    Redirects the user to the NASA Exoplanet Archive.
-    """
+def redirect(url=str):
     invalid = True
     while invalid:
-        print(
-            '\nWould you like to be redirected to the [blue]NASA Exoplanet Archive[/blue]?')
-        redirect_NEA = ask_for('(Y/N): ', _type=str).lower()
+        print(f'\nWould you like to be [blue]redirected[/blue] to: {url} ?')
+        redirect = ask_for(
+            '(y/n): ', error_msg='Wrong data type', _type=str).lower()
 
-        if redirect_NEA == 'y':
-            webbrowser.open_new_tab(
-                'https://exoplanetarchive.ipac.caltech.edu')
+        if redirect == 'y':
+            webbrowser.open_new_tab(f'{url}')
             invalid = False
-        elif redirect_NEA == 'n':
+        elif redirect == 'n':
             print('\nContinuing...')
             invalid = False
 
@@ -148,11 +105,15 @@ def upload():
         #! then click on your images, then copy that URL and paste it here.
         webbrowser.open('http://nova.astrometry.net/users/20995')
 
-        # * Looks up target on SIMBAD search portal
-        simbad()
+        # * Redirects to SIMBAD search portal
+        print(
+            '\nThis is to look up your target and get the [blue]RA and Dec coordinates[/blue] for it.')
+        redirect('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
 
         # * Redirects to the NASA exoplanet archive
-        NEA()
+        print(
+            '\nThis is to get more information about your target such as the [blue]host star[/blue] infromation.')
+        redirect('https://exoplanetarchive.ipac.caltech.edu')
     else:
         #! Code to execute when solve fails
         print('\n[bold red]Failed[/bold red] to solve.')
@@ -199,7 +160,7 @@ if __name__ == "__main__":
           'on nova.astrometry.net')
     print('--------------------------------------------------------------------------')
 
-    time.sleep(1.5)
+    time.sleep(1)
 
     domain()
 
