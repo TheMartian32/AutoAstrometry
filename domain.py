@@ -4,10 +4,11 @@ import webbrowser
 import time
 from astroquery.astrometry_net import AstrometryNet
 from rich import print
-from selenium import webdriver
+from astroquery.simbad import Simbad
+import sys
 
 
-def ask_for(prompt, error_msg=None, _type=None):
+def ask_for(prompt, error_msg=None, _type=None, delay=0):
     """ While the desired prompt is not given, it repeats the prompt. """
     while True:
         inp = input(prompt).strip()
@@ -23,22 +24,48 @@ def ask_for(prompt, error_msg=None, _type=None):
                 if error_msg:
                     print(error_msg)
                 continue
+
         return inp
 
 
 def redirect(url=str):
+    """
+    Takes in a URL as a string and asks the user if they would like to be redirected
+    to that URL.
+
+    Args:
+        url (str, optional): URL that the user needs to be redirected to. Defaults to str.
+    """
     invalid = True
     while invalid:
         print(f'\nWould you like to be [blue]redirected[/blue] to: {url} ?')
         redirect = ask_for(
             '(y/n): ', error_msg='Wrong data type', _type=str).lower()
 
-        if redirect == 'y':
+        if redirect[0] == 'y':
             webbrowser.open_new_tab(f'{url}')
             invalid = False
-        elif redirect == 'n':
+        elif redirect[0] == 'n':
             print('\nContinuing...')
             invalid = False
+
+
+def simbad_query():
+    """
+    Looks up target and prints out the information such as RA and Dec.
+    When using the function, it automatically asks the user for a target.
+    """
+
+    try:
+        print(
+            '\nTo find the [blue]RA and Dec[/blue] of your target, please put it in here.')
+        print("If your target can't be found, it will automatically redirect you to the website to put it in again.")
+        target = ask_for('\nTarget name: ')
+        query = Simbad.query_object(f'{target}')
+        query.pprint()
+        redirect('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
+    except:
+        webbrowser.open('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
 
 
 def upload():
@@ -52,9 +79,11 @@ def upload():
 
     while look_for:
         # * Asks for the directory of the FITS file.
+        print('\n-------------------------------------------------------------------------------')
         fits_dir = ask_for(
-            '\nWhat is the path to the FITS file? '
+            'What is the path to the FITS file? '
             '(Make sure file ends in .FITS, .JPEG or .PNG): ', 'Error', str)
+        print('-------------------------------------------------------------------------------')
 
         # * If the the file ends with the desired type
         file_types = ['.FITS', '.JPEG', '.PNG',
@@ -82,10 +111,11 @@ def upload():
             else:
                 # * Time is in seconds.
                 wcs_header = ast.monitor_submission(submission_id,
-                                                    solve_timeout=900)
+                                                    solve_timeout=1500)
         except TimeoutError as e:
             submission_id = e.args[1]
             print('\nThere was a timeout error. ( Process took to long ).')
+            print('Astometry.net could also be down at the moment.')
         else:
             #! got a result, so terminate
             try_again = False
@@ -105,14 +135,21 @@ def upload():
         #! then click on your images, then copy that URL and paste it here.
         webbrowser.open('http://nova.astrometry.net/users/20995')
 
-        # * Redirects to SIMBAD search portal
+        # * Redirects to SIMBAD search portal and looks up target with astroquery
         print(
-            '\nThis is to look up your target and get the [blue]RA and Dec coordinates[/blue] for it.')
-        redirect('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
+            '\nTo find the [blue]RA and Dec[/blue] of your target, please put it in here.')
+        print("If your target can't be found, it will automatically redirect you to the website to put it in again.")
+        target = ask_for('\nTarget name: ')
+        query = Simbad.query_object(f'{target}')
+        query.pprint()
+
+        # * Looks up target with astroquery then can redirect user to the website
+        # * to use the aladin lite view to find comp stars, look around, etc.
+        simbad_query()
 
         # * Redirects to the NASA exoplanet archive
         print(
-            '\nThis is to get more information about your target such as the [blue]host star[/blue] infromation.')
+            '\nThis is to get more information about your target such as the [blue]host star[/blue] information.')
         redirect('https://exoplanetarchive.ipac.caltech.edu')
     else:
         #! Code to execute when solve fails
