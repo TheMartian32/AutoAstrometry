@@ -5,7 +5,6 @@ import time
 from astroquery.astrometry_net import AstrometryNet
 from rich import print
 from astroquery.simbad import Simbad
-import sys
 
 
 def ask_for(prompt, error_msg=None, _type=None, delay=0):
@@ -68,6 +67,34 @@ def simbad_query():
         webbrowser.open('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
 
 
+def search(image):
+    search_through = image
+
+    # * Getting the Right Ascension and Declination for the center of the image
+    center_ra = ask_for(
+        '\nWhat is the RA (Right Ascension) of the center of the image?: ')
+    center_dec = ask_for(
+        'What is the declination of the center of the image?: ')
+
+    # * Getting the target Right Ascension and Declination in degrees
+    target_ra = ask_for('\nWhat is the RA of your target in degrees?: ')
+    target_dec = ask_for(
+        'What is the declination of your target in degrees?: ')
+
+    pixel_scale = ask_for(
+        '\nWhat is the pixel scale of your image? ( unit/pixel ): ')
+
+    H, W = search_through.shape
+
+    x = int((target_ra-center_ra) / pixel_scale + W / 2)
+    y = int((target_dec-center_dec) / pixel_scale + H / 2)
+
+    patch_size = 50
+    image_patch = search_through[x - patch_size:x +
+                                 patch_size, y - patch_size: y+patch_size]
+    return image_patch
+
+
 def upload():
     """
     Using astroquery it asks the user for the
@@ -79,11 +106,13 @@ def upload():
 
     while look_for:
         # * Asks for the directory of the FITS file.
-        print('\n-------------------------------------------------------------------------------')
-        fits_dir = ask_for(
-            'What is the path to the FITS file? '
-            '(Make sure file ends in .FITS, .JPEG or .PNG): ', 'Error', str)
-        print('-------------------------------------------------------------------------------')
+        print('\n-------------------------------------------------------')
+        print('What is the path to the FITS file?')
+        print(
+            'Please make sure the file [bold blue]ends in .FITS, JPEG, or .PNG[/bold blue]')
+        print('-------------------------------------------------------')
+
+        fits_dir = ask_for('\n: ', str)
 
         # * If the the file ends with the desired type
         file_types = ['.FITS', '.JPEG', '.PNG',
@@ -123,25 +152,8 @@ def upload():
     if wcs_header:
         # * Code to execute when solve succeeds
         print('\n[green]Success![/green]')
-        print('\nTo get more information of your image, '
-              'please go to this URL: [blue]http://nova.astrometry.net/users/20995[/blue]')
-
-        # * Telling user that they are currently being redirected to website.
-        print('\nRedirecting you to [bold]website[/bold].')
-        time.sleep(5)
-
-        # * Opening URL
-        #! If you are using this script please sign up for an account,
-        #! then click on your images, then copy that URL and paste it here.
-        webbrowser.open('http://nova.astrometry.net/users/20995')
-
-        # * Redirects to SIMBAD search portal and looks up target with astroquery
-        print(
-            '\nTo find the [blue]RA and Dec[/blue] of your target, please put it in here.')
-        print("If your target can't be found, it will automatically redirect you to the website to put it in again.")
-        target = ask_for('\nTarget name: ')
-        query = Simbad.query_object(f'{target}')
-        query.pprint()
+        print('\nTo get the most possible information out of your image please go to the website below.')
+        redirect('http://nova.astrometry.net/users/20995')
 
         # * Looks up target with astroquery then can redirect user to the website
         # * to use the aladin lite view to find comp stars, look around, etc.
@@ -169,8 +181,10 @@ def domain():
     # * While the prompt isnt y or n it repeats it
     invalid = True
     while invalid:
+        print(
+            '\nDo you have [blue]more than one file[/blue] that needs to be uploaded? (y/n)')
         how_many = ask_for(
-            '\nDo you have more than one file that needs to be plate solved? (y/n): ', 'Error', str).lower()
+            '\n: ', 'Error', str).lower()
 
         if how_many == 'y':
             num_files = ask_for(
@@ -192,10 +206,10 @@ def domain():
 
 
 if __name__ == "__main__":
-    print('\n--------------------------------------------------------------------------')
+    print('\n----------------------------------------------------------------------------------')
     print('To use this software please register for an account '
-          'on nova.astrometry.net')
-    print('--------------------------------------------------------------------------')
+          'on http://nova.astrometry.net')
+    print('----------------------------------------------------------------------------------')
 
     time.sleep(1)
 
