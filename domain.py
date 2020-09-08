@@ -211,6 +211,8 @@ if __name__ == "__main__":
           'on http://nova.astrometry.net')
     print('----------------------------------------------------------------------------------')
 
+    print('\nThis is the autofind branch. Remove and merge branches when done.')
+
     time.sleep(1)
 
     domain()
