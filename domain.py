@@ -54,6 +54,9 @@ def redirect(url='https://www.google.com'):
             invalid = False
 
 
+print('adding new stuff')
+
+
 def simbad_query():
     """
     Looks up target and prints out the information such as RA and Dec.
