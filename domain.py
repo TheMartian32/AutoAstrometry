@@ -5,6 +5,8 @@ from rich import print
 from rich.table import Table
 from astroquery.simbad import Simbad
 from astropy.io import fits
+from astropy.coordinates import SkyCoord
+from astropy import units as u
 import os
 
 
@@ -39,7 +41,7 @@ def redirect(url='https://www.google.com'):
     invalid = True
     while invalid:
         # * Asks the user if they want to be redirected to the website
-        print(f'\nWould you like to be [blue]redirected[/blue] to: {url} ?')
+        print(f'\nWould you like to be [bold blue]redirected[/] to: {url} ?')
         redirect = ask_for(
             '(y/n): ', error_msg='Wrong data type', _type=str).lower()
 
@@ -52,9 +54,6 @@ def redirect(url='https://www.google.com'):
         elif redirect[0] == 'n':
             print('\nContinuing...')
             invalid = False
-
-
-print('adding new stuff')
 
 
 def simbad_query():
@@ -98,6 +97,8 @@ def find_fits_dir():
             'Please make sure the file [bold blue]ends in .FITS, JPEG, or .PNG[/bold blue]')
         print('-------------------------------------------------------')
 
+        time.sleep(2)
+
         print(
             '\nYou can put in a path for a directory or file. \n(  Directory EX: /Users/user/Pictures | File EX: /Users/user/Pictures/photo.png )')
         print('\nTo [bold blue]copy a file path[/] on Mac right click on file, then hold alt, then select [bold blue]copy as pathname[/].')
@@ -111,32 +112,75 @@ def find_fits_dir():
 
         # * Given path is directory
         if os.path.isdir(dir_or_file):
+            # * For every file in the directory print out how many there are.
             for file_name in os.listdir(dir_or_file):
                 counter += 1
                 print(counter)
+                print('File: ')
+                # * Checks if the file is one of the supported file extensions.
                 if file_name.endswith(tuple(file_extensions)):
+                    # * Prints out file path
                     print(
-                        f'File: {os.path.join(dir_or_file)}/{file_name}')
+                        f'\n{os.path.join(dir_or_file)}/{file_name}')
 
                     look_for = False
+        # * Asks for the image they want to upload.
+        print(
+            '\nWhich [bold blue]image[/] would you like to [bold blue]upload[/]? (One of the paths above)')
+        upload_image = ask_for('\n:')
+        return upload_image
 
         # * Given path is file
         if os.path.isfile(dir_or_file):
+            # * Finds out if the file is one of the supported file extensions.
             if dir_or_file.endswith(tuple(file_extensions)):
-                print(f'\nFile: {os.path.join(dir_or_file)}')
+                # * Prints out path and breaks out of loop.
+                print(f'\n{os.path.join(dir_or_file)}')
                 look_for = False
                 return dir_or_file
 
 
-def upload(self):
+def search():
+    """
+    Using RA and Dec coordinates this function can convert them to
+    degrees in the ICRS frame. ( I have zero idea what im talking about )
+    """
+    search_for_ra_dec = True
+    while search_for_ra_dec:
+
+        try:
+            print('\n[bold blue]Right Ascension[/]')
+            print(
+                'Enter the values [bold]one at a time[/]. ( EX: 19 ( hit enter ), 07 ( hit enter ), 14 ( hit enter )')
+            print('The same applies for [bold blue]Declination values[/].')
+            ra1 = ask_for('\n: ', _type=int)
+            ra2 = ask_for(': ', _type=int)
+            ra3 = ask_for(': ', _type=int)
+
+            print("\n[bold blue]Declination[/], don't forget the + or -")
+            dec1 = ask_for('\n: ', _type=int)
+            dec2 = ask_for(': ', _type=int)
+            dec3 = ask_for(': ', _type=int)
+
+            c = SkyCoord(f'{ra1}h{ra2}m{ra3}s',
+                         f'{dec1}d{dec2}m{dec3}s', frame='icrs', unit='deg')
+            print(c)
+        except ValueError:
+            print('\n[red]Value Error ocurred[/]')
+            print('Please [bold blue]re-enter your RA and Dec[/]')
+        else:
+            search_for_ra_dec = False
+
+
+
+def upload():
     """
     Using astroquery it asks the user for the
     FITS file then it uploads that file to nova.astronometry.net
     then it solves the image, then redirects the user to the website.
     """
 
-    fits_file = ask_for(
-        '\nPlease provide a path to the file you would like to upload: ')
+    image = find_fits_dir()
 
     # * Creating instance of astrometry.net
     ast = AstrometryNet()
@@ -149,12 +193,12 @@ def upload(self):
         try:
             if not submission_id:
                 # * Solves the image from the file path
-                wcs_header = ast.solve_from_image(f'{fits_file}',
+                wcs_header = ast.solve_from_image(f'{image}',
                                                   submission_id=submission_id)
             else:
                 # * Time is in seconds.
-                wcs_header = ast.monitor_submission(submission_id,
-                                                    solve_timeout=1500)
+                wcs_header = ast.monitor_submission(
+                    submission_id, solve_timeout=240)
         except TimeoutError as e:
             submission_id = e.args[1]
             print('\nThere was a timeout error. ( Process took to long ).')
@@ -174,55 +218,22 @@ def upload(self):
         # * to use the aladin lite view to find comp stars, look around, etc.
         simbad_query()
 
+        find_pixel_coordinates = ask_for(
+            '\nDo you want to find the ICRS position for your target? (y/n)').lower()
+
+        if find_pixel_coordinates == 'y':
+            search()
+        elif find_pixel_coordinates == 'n':
+            print('\nContinuing...')
+            time.sleep(1.25)
+
         # * Redirects to the NASA exoplanet archive
         print(
-            '\nThis is to get more information about your target such as the [blue]host star[/blue] information.')
+            '\nThis is to get more information about your target such as the [bold blue]host star[/] information.')
         redirect('https://exoplanetarchive.ipac.caltech.edu')
     else:
         #! Code to execute when solve fails
         print('\n[bold red]Failed[/bold red] to solve.')
-
-# def search(self, image):
-#     """
-#     In progress not ready for use yet
-#     Note: Use JS9 API.
-
-#     Args:
-#         image (FITS): FITS image.
-
-#     Returns:
-#         Float: Returns pixel values in the form of a floating point number
-#     """
-#     fits_image = image
-
-#     # * Uses filepath
-#     hdul = fits.open(fits_image)
-#     hdr = hdul[0].header
-#     print(list(hdr.keys()))
-
-#     # * Getting the Right Ascension and Declination for the center of the image
-#     center_ra = ask_for(
-#         '\nWhat is the RA (Right Ascension) of the center of the image?: ')
-#     center_dec = ask_for(
-#         'What is the declination of the center of the image?: ')
-
-#     # * Getting the target Right Ascension and Declination in degrees
-#     target_ra = ask_for('\nWhat is the RA of your target in degrees?: ')
-#     target_dec = ask_for(
-#         'What is the declination of your target in degrees?: ')
-
-#     pixel_scale = ask_for(
-#         '\nWhat is the pixel scale of your image? ( unit/pixel ): ')
-
-#     H, W = search_through.shape
-
-#     x = int((target_ra-center_ra) / pixel_scale + W / 2)
-#     y = int((target_dec-center_dec) / pixel_scale + H / 2)
-
-#     patch_size = 50
-#     image_patch = search_through[x - patch_size:x +
-#                                  patch_size, y - patch_size: y+patch_size]
-#     return image_patch
 
 
 if __name__ == "__main__":
@@ -231,15 +242,13 @@ if __name__ == "__main__":
           'on http://nova.astrometry.net')
     print('----------------------------------------------------------------------------------')
 
-    print('\nTo [red]terminate the program[/] press [b]Control+C[/].')
+    print('\nTo [bold blue]terminate the program[/] press [b]Control+C[/].')
+    print(
+        '\nIf you get a [bold blue]TIMEOUT ERROR[/], check the link above for your image.')
     time.sleep(1.25)
 
     print(
-        '\n******************** [blue]Beginning of program[/] ********************')
-
-    print('\nThis is the autofind branch. Remove and merge branches when done.')
-
-    find_fits_dir()
+        '\n******************** [bold blue]Beginning of program[/] ********************')
 
     def rerun():
         """
@@ -248,7 +257,8 @@ if __name__ == "__main__":
         # * While the prompt isnt y or n it repeats it
         invalid = True
         while invalid:
-            print('\nDo you have to upload [blue]more than one file[/]? (y/n)')
+            print(
+                '\nDo you want to upload [bold blue]more than one file[/]? (y/n)')
             how_many = ask_for(
                 '\n: ', 'Error', str).lower()
 
@@ -277,10 +287,9 @@ if __name__ == "__main__":
     repeat = ask_for('\n: ', 'Error', str).lower()
 
     if repeat == 'y':
-        find_fits_dir()
         upload()
         rerun()
     if repeat == 'n':
         print('\n********************'
-              ' [blue]End of Plate Solving[/blue] '
+              ' [bold blue]End of program[/blue] '
               '********************')
