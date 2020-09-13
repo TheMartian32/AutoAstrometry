@@ -1,3 +1,10 @@
+"""
+This script has many abilities. Using astroquery it can upload the image to astrometry.net and get a plate solution.
+Along with this it can use the SIMBAD service to get coordinates for your target. Then using astropy it can convert
+those coordinates to ICRS coordinates. Along with this it can do a lot of other things.
+"""
+
+
 import webbrowser
 import time
 from astroquery.astrometry_net import AstrometryNet
@@ -104,6 +111,7 @@ def find_fits_dir():
         print('\nTo [bold blue]copy a file path[/] on Mac right click on file, then hold alt, then select [bold blue]copy as pathname[/].')
         dir_or_file = ask_for('\n: ', _type=str)
 
+        # * Supported file extensions (mainly those just supported by astrometry.net)
         file_extensions = ['.FITS', '.JPEG', '.PNG',
                            '.FIT', '.fits', '.fit', '.fts']
 
@@ -124,11 +132,11 @@ def find_fits_dir():
                         f'\n{os.path.join(dir_or_file)}/{file_name}')
 
                     look_for = False
-        # * Asks for the image they want to upload.
-        print(
-            '\nWhich [bold blue]image[/] would you like to [bold blue]upload[/]? (One of the paths above)')
-        upload_image = ask_for('\n:')
-        return upload_image
+            # * Asks for the image they want to upload.
+            print(
+                '\nWhich [bold blue]image[/] would you like to [bold blue]upload[/]? (One of the paths above)')
+            upload_image = ask_for('\n:')
+            return upload_image
 
         # * Given path is file
         if os.path.isfile(dir_or_file):
@@ -149,7 +157,9 @@ def search():
     while search_for_ra_dec:
 
         try:
-            print('\n[bold blue]Right Ascension[/]')
+            # * Uses SkyCoord to convert RA and Dec values to ICRS coordinates
+            print(
+                '\n[bold blue]Right Ascension[/] and [bold blue]Declination[/] for your target.')
             print(
                 'Enter the values [bold]one at a time[/]. ( EX: 19 ( hit enter ), 07 ( hit enter ), 14 ( hit enter )')
             print('The same applies for [bold blue]Declination values[/].')
@@ -162,15 +172,17 @@ def search():
             dec2 = ask_for(': ', _type=int)
             dec3 = ask_for(': ', _type=int)
 
+            # * Conversion
             c = SkyCoord(f'{ra1}h{ra2}m{ra3}s',
                          f'{dec1}d{dec2}m{dec3}s', frame='icrs', unit='deg')
             print(c)
+        # * Value error, user didn't enter in the right values
         except ValueError:
             print('\n[red]Value Error ocurred[/]')
             print('Please [bold blue]re-enter your RA and Dec[/]')
         else:
+            # * Got a result so break out of loop
             search_for_ra_dec = False
-
 
 
 def upload():
@@ -200,6 +212,7 @@ def upload():
                 wcs_header = ast.monitor_submission(
                     submission_id, solve_timeout=240)
         except TimeoutError as e:
+            # * Timeout error, never triggers. Basically useless code b
             submission_id = e.args[1]
             print('\nThere was a timeout error. ( Process took to long ).')
             print('Astometry.net could also be down at the moment.')
@@ -219,7 +232,7 @@ def upload():
         simbad_query()
 
         find_pixel_coordinates = ask_for(
-            '\nDo you want to find the ICRS position for your target? (y/n)').lower()
+            '\nDo you want to find the ICRS position for your target? (y/n): ').lower()
 
         if find_pixel_coordinates == 'y':
             search()
@@ -282,8 +295,8 @@ if __name__ == "__main__":
 
     rerun()
 
-    print('\nDo you have any [light blue]more images[/light blue] to be plate solved? '
-          '([green]Y[/green]/[red]N[/red])')
+    print('\nDo you have any [bold blue]more images[/] to be uploaded? '
+          '(y/n)')
     repeat = ask_for('\n: ', 'Error', str).lower()
 
     if repeat == 'y':
@@ -291,5 +304,5 @@ if __name__ == "__main__":
         rerun()
     if repeat == 'n':
         print('\n********************'
-              ' [bold blue]End of program[/blue] '
+              ' [bold blue]End of program[/] '
               '********************')
