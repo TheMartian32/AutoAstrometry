@@ -4,20 +4,19 @@ Along with this it can use the SIMBAD service to get coordinates for your target
 those coordinates to ICRS coordinates. Along with this it can do a lot of other things.
 """
 
-
 import webbrowser
 import time
 from astroquery.astrometry_net import AstrometryNet
+from astroquery.simbad import Simbad
 from rich import print
 from rich.table import Table
-from astroquery.simbad import Simbad
 from astropy.io import fits
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 import os
 
 
-def ask_for(prompt, error_msg=None, _type=None, delay=0):
+def ask_for(prompt, error_msg=None, _type=None):
     """ While the desired prompt is not given, it repeats the prompt. """
     while True:
         inp = input(prompt).strip()
@@ -37,28 +36,29 @@ def ask_for(prompt, error_msg=None, _type=None, delay=0):
         return inp
 
 
-def redirect(url='https://www.google.com'):
+def redirect_to(url='https://www.google.com'):
     """
     Takes in a URL as a string and asks the user if they would like to be redirected
     to that URL.
 
     Args:
-        url (str, optional): URL that the user needs to be redirected to. Defaults to str.
+        url (str, optional): URL that the user needs to be redirected to. Defaults to google.com.
     """
     invalid = True
     while invalid:
-        # * Asks the user if they want to be redirected to the website
-        print(f'\nWould you like to be [bold blue]redirected[/] to: {url} ?')
-        redirect = ask_for(
+        # * Asks the user if they want to be redirect_toed to the website
+        print(
+            f'\nWould you like to be [bold blue]redirected[/] to: {url} ?')
+        redirect_to = ask_for(
             '(y/n): ', error_msg='Wrong data type', _type=str).lower()
 
         # * If they do want to go to the website it opens it then breaks out of the loop.
-        if redirect[0] == 'y':
+        if redirect_to[0] == 'y':
             webbrowser.open_new_tab(f'{url}')
             invalid = False
 
         # * They don't want to go to the website so it breaks out of the loop.
-        elif redirect[0] == 'n':
+        elif redirect_to[0] == 'n':
             print('\nContinuing...')
             invalid = False
 
@@ -73,15 +73,15 @@ def simbad_query():
     try:
         # * Tells user why they need this.
         print(
-            '\nTo find the [blue]RA and Dec[/blue] of your target, please put it in here.')
+            '\nTo find the [bold blue]RA and Dec[/] of your target, please put it in here.')
         print("If your target can't be found, it will automatically redirect you to the website to put it in again.")
 
         # * Asks for target name and tries to look it up then if it can, prints it out.
         target = ask_for('\nTarget name: ')
         query = Simbad.query_object(f'{target}')
         query.pprint()
-        # * Asks the user if they wanted to be redirected to the website.
-        redirect('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
+        # * Asks the user if they wanted to be redirect_toed to the website.
+        redirect_to('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
     except:
         # * If theres an error it automatically just opens the website.s
         webbrowser.open('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
@@ -99,9 +99,9 @@ def find_fits_dir():
     while look_for:
             # * Asks for the directory of the FITS file.
         print('\n-------------------------------------------------------')
-        print('What is the path to the FITS file or directory?')
+        print('What is the path to the image file or directory?')
         print(
-            'Please make sure the file [bold blue]ends in .FITS, JPEG, or .PNG[/bold blue]')
+            'Please make sure the file [bold blue]ends in .FITS, JPEG, or .PNG[/]')
         print('-------------------------------------------------------')
 
         time.sleep(2)
@@ -189,9 +189,10 @@ def upload():
     """
     Using astroquery it asks the user for the
     FITS file then it uploads that file to nova.astronometry.net
-    then it solves the image, then redirects the user to the website.
+    then it solves the image, then redirect_tos the user to the website.
     """
 
+    # * Gets file path for the image to be uploaded
     image = find_fits_dir()
 
     # * Creating instance of astrometry.net
@@ -205,14 +206,14 @@ def upload():
         try:
             if not submission_id:
                 # * Solves the image from the file path
-                wcs_header = ast.solve_from_image(f'{image}',
-                                                  submission_id=submission_id)
+                wcs_header = ast.solve_from_image(f'{image}', force_image_upload=True,
+                                                  submission_id=submission_id, solve_timeout=1000)
             else:
                 # * Time is in seconds.
                 wcs_header = ast.monitor_submission(
-                    submission_id, solve_timeout=240)
+                    submission_id, solve_timeout=1000)
         except TimeoutError as e:
-            # * Timeout error, never triggers. Basically useless code b
+            # * Timeout error, never triggers. Basically useless code since it never triggers during timeout error
             submission_id = e.args[1]
             print('\nThere was a timeout error. ( Process took to long ).')
             print('Astometry.net could also be down at the moment.')
@@ -225,25 +226,48 @@ def upload():
         print('\nSuccess! :thumbs_up:')
         print(
             '\nTo get the most possible information out of your image please go to the website below.')
-        redirect('http://nova.astrometry.net/users/20995')
+        redirect_to('http://nova.astrometry.net/users/20995')
 
-        # * Looks up target with astroquery then can redirect user to the website
+        # * Looks up target with astroquery then can redirect_to user to the website
         # * to use the aladin lite view to find comp stars, look around, etc.
         simbad_query()
 
-        find_pixel_coordinates = ask_for(
+        find_icrs_coordinates = ask_for(
             '\nDo you want to find the ICRS position for your target? (y/n): ').lower()
 
-        if find_pixel_coordinates == 'y':
+        if find_icrs_coordinates == 'y':
             search()
-        elif find_pixel_coordinates == 'n':
+
+            convert_comp_stars = True
+            while convert_comp_stars:
+
+                # * Asks the user if they have any comparison stars they need the ICRS coordinates for
+                print(
+                    '\nDo you have any [bold blue]comparison stars[/] that you want to get the [bold blue]ICRS coordinates[/] for? (y/n)')
+                comp_stars_icrs = ask_for('\n: ')
+
+                if comp_stars_icrs == 'y':
+
+                    # * Number of comparison stars.
+                    print(
+                        '\nHow many [bold blue]comparison stars[/] do you have?')
+                    num_comp_stars = ask_for(
+                        '\n: ', error_msg='Please put in an integer.', _type=int)
+
+                    # * If number of comparison stars is over 10, repeat prompt.
+                    if num_comp_stars > 10:
+                        print('\nThe limit is 10 comparison stars.')
+                    elif num_comp_stars <= 10:
+                        for _ in range(num_comp_stars):
+                            search()
+        elif find_icrs_coordinates == 'n':
             print('\nContinuing...')
             time.sleep(1.25)
 
-        # * Redirects to the NASA exoplanet archive
+        # * redirects to the NASA exoplanet archive
         print(
             '\nThis is to get more information about your target such as the [bold blue]host star[/] information.')
-        redirect('https://exoplanetarchive.ipac.caltech.edu')
+        redirect_to('https://exoplanetarchive.ipac.caltech.edu')
     else:
         #! Code to execute when solve fails
         print('\n[bold red]Failed[/bold red] to solve.')
