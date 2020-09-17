@@ -1,5 +1,8 @@
+from astroquery.astrometry_net import AstrometryNet
 from rich import print
 from astropy.io import fits
+from astropy.wcs import WCS
+import numpy as np
 """
 A module dedicated purely for testing out new features.
 9 / 7 / 20
@@ -26,31 +29,19 @@ def ask_for(prompt, error_msg=None, _type=None, delay=0):
         return inp
 
 
-def search(image_path):
+def search():
+    from astropy.coordinates import SkyCoord
+    from astropy import units as u
 
-    image = fits.open(image_path)
-    data = image[1].data
+    ra1 = ask_for('\n: ', _type=int)
+    ra2 = ask_for('\n: ', _type=int)
+    ra3 = ask_for('\n: ', _type=int)
 
-    # * Getting the Right Ascension and Declination for the center of the image
-    center_ra = ask_for(
-        '\nWhat is the RA (Right Ascension) of the center of the image?: ')
-    center_dec = ask_for(
-        'What is the declination of the center of the image?: ')
+    dec1 = ask_for('\n: ', _type=int)
+    dec2 = ask_for('\n: ', _type=int)
+    dec3 = ask_for('\n: ', _type=int)
 
-    # * Getting the target Right Ascension and Declination in degrees
-    target_ra = ask_for('\nWhat is the RA of your target in degrees?: ')
-    target_dec = ask_for(
-        'What is the declination of your target in degrees?: ')
+    c = SkyCoord(f'{ra1}h{ra2}m{ra3}s',
+                 f'{dec1}d{dec2}m{dec3}s', frame='icrs', unit='deg')
 
-    pixel_scale = ask_for(
-        '\nWhat is the pixel scale of your image? ( unit/pixel ): ')
-
-    H, W = image.shape
-
-    x = int((target_ra-center_ra) / pixel_scale + W / 2)
-    y = int((target_dec-center_dec) / pixel_scale + H / 2)
-
-    patch_size = 50
-    image_patch = image[x - patch_size:x +
-                        patch_size, y - patch_size: y+patch_size]
-    return image_patch
+    print(c)
