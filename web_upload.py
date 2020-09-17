@@ -1,5 +1,6 @@
-from selenium import webdriver
 from rich import print
+import webbrowser
+from astroquery.simbad import Simbad
 
 
 def ask_for(prompt, error_msg=None, _type=None):
@@ -20,30 +21,57 @@ def ask_for(prompt, error_msg=None, _type=None):
                 continue
         return inp
 
-def look_up_target():
-    print(
-        '\nWould you like to be [bold]redirected[/bold] to the [blue]SIMBAD search portal[/blue]?')
-    redirect_simbad = ask_for('(Y/N): ').lower()
 
-    if redirect_simbad == 'y':
-        # * Getting name of target to enter into SIMBAD search portal
+def redirect_to(url='https://www.google.com'):
+    """
+    Takes in a URL as a string and asks the user if they would like to be redirected
+    to that URL.
+
+    Args:
+        url (str, optional): URL that the user needs to be redirected to. Defaults to google.com.
+    """
+    invalid = True
+    while invalid:
+        # * Asks the user if they want to be inp.redirect_toed to the website
         print(
-            '\nWhat is the [bold]name[/bold] of your [blue]target[/blue]?')
-        target_name = ask_for('\n: ')
+            f'\nWould you like to be [bold blue]redirected[/] to: {url} ?')
+        inp.redirect_to = ask_for(
+            '(y/n): ', error_msg='Wrong data type', _type=str).lower()
 
-        # * Opening SIMBAD URL.
-        browser = webdriver.Safari()
-        browser.get('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
-        python_button = browser.find_element_by_xpath(
-            "/html/body/div[3]/div/form/table/tbody/tr[1]/td[2]/input")
-        python_button.send_keys(f'{target_name}')
+        # * If they do want to go to the website it opens it then breaks out of the loop.
+        if inp.redirect_to[0] == 'y':
+            webbrowser.open_new_tab(f'{url}')
+            invalid = False
 
-        python_button = browser.find_element_by_xpath(
-            "/html/body/div[3]/div/form/table/tbody/tr[3]/td[2]/input[1]")
-        python_button.click()
+        # * They don't want to go to the website so it breaks out of the loop.
+        elif inp.redirect_to[0] == 'n':
+            print('\nContinuing...')
+            invalid = False
 
-    elif redirect_simbad == 'n':
-        print('Continuing...')
+
+def simbad_query():
+    """
+    Looks up target and prints out the information such as RA and Dec.
+    When using the function, it automatically asks the user for a target.
+    """
+
+    # * Tries to query the target using astroquery if it fails it just opens the SIMBAD website
+    try:
+        # * Tells user why they need this.
+        print(
+            '\nTo find the [bold blue]RA and Dec[/] of your target, please put it in here.')
+        print("If your target can't be found, it will automatically redirect you to the website to put it in again.")
+
+        # * Asks for target name and tries to look it up then if it can, prints it out.
+        target = ask_for('\nTarget name: ')
+        query = Simbad.query_object(f'{target}')
+        query.pprint()
+        # * Asks the user if they wanted to be inp.redirect_toed to the website.
+        redirect_to('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
+    except:
+        # * If theres an error it automatically just opens the website.s
+        webbrowser.open('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
+
 
 if __name__ == "__main__":
-    look_up_target()
+    simbad_query()
