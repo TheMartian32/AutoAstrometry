@@ -16,75 +16,77 @@ from astropy import units as u
 import os
 
 
-def ask_for(prompt, error_msg=None, _type=None):
-    """ While the desired prompt is not given, it repeats the prompt. """
-    while True:
-        inp = input(prompt).strip()
-        if not inp:
-            if error_msg:
-                print(error_msg)
-            continue
-
-        if _type:
-            try:
-                inp = _type(inp)
-            except ValueError:
+class InputsAndRedirects():
+    def ask_for(self, prompt, error_msg=None, _type=None):
+        """ While the desired prompt is not given, it repeats the prompt. """
+        while True:
+            inp = input(prompt).strip()
+            if not inp:
                 if error_msg:
                     print(error_msg)
                 continue
 
-        return inp
+            if _type:
+                try:
+                    inp = _type(inp)
+                except ValueError:
+                    if error_msg:
+                        print(error_msg)
+                    continue
+
+            return inp
+
+    def redirect_to(self, url='https://www.google.com'):
+        """
+        Takes in a URL as a string and asks the user if they would like to be redirected
+        to that URL.
+
+        Args:
+            url (str, optional): URL that the user needs to be redirected to. Defaults to google.com.
+        """
+        invalid = True
+        while invalid:
+            # * Asks the user if they want to be inp.redirect_toed to the website
+            print(
+                f'\nWould you like to be [bold blue]redirected[/] to: {url} ?')
+            inp.redirect_to = inp.ask_for(
+                '(y/n): ', error_msg='Wrong data type', _type=str).lower()
+
+            # * If they do want to go to the website it opens it then breaks out of the loop.
+            if inp.redirect_to[0] == 'y':
+                webbrowser.open_new_tab(f'{url}')
+                invalid = False
+
+            # * They don't want to go to the website so it breaks out of the loop.
+            elif inp.redirect_to[0] == 'n':
+                print('\nContinuing...')
+                invalid = False
+
+    def simbad_query(self):
+        """
+        Looks up target and prints out the information such as RA and Dec.
+        When using the function, it automatically asks the user for a target.
+        """
+
+        # * Tries to query the target using astroquery if it fails it just opens the SIMBAD website
+        try:
+            # * Tells user why they need this.
+            print(
+                '\nTo find the [bold blue]RA and Dec[/] of your target, please put it in here.')
+            print("If your target can't be found, it will automatically redirect you to the website to put it in again.")
+
+            # * Asks for target name and tries to look it up then if it can, prints it out.
+            target = inp.ask_for('\nTarget name: ')
+            query = Simbad.query_object(f'{target}')
+            query.pprint()
+            # * Asks the user if they wanted to be inp.redirect_toed to the website.
+            inp.redirect_to('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
+        except:
+            # * If theres an error it automatically just opens the website.s
+            webbrowser.open('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
 
 
-def redirect_to(url='https://www.google.com'):
-    """
-    Takes in a URL as a string and asks the user if they would like to be redirected
-    to that URL.
-
-    Args:
-        url (str, optional): URL that the user needs to be redirected to. Defaults to google.com.
-    """
-    invalid = True
-    while invalid:
-        # * Asks the user if they want to be redirect_toed to the website
-        print(
-            f'\nWould you like to be [bold blue]redirected[/] to: {url} ?')
-        redirect_to = ask_for(
-            '(y/n): ', error_msg='Wrong data type', _type=str).lower()
-
-        # * If they do want to go to the website it opens it then breaks out of the loop.
-        if redirect_to[0] == 'y':
-            webbrowser.open_new_tab(f'{url}')
-            invalid = False
-
-        # * They don't want to go to the website so it breaks out of the loop.
-        elif redirect_to[0] == 'n':
-            print('\nContinuing...')
-            invalid = False
-
-
-def simbad_query():
-    """
-    Looks up target and prints out the information such as RA and Dec.
-    When using the function, it automatically asks the user for a target.
-    """
-
-    # * Tries to query the target using astroquery if it fails it just opens the SIMBAD website
-    try:
-        # * Tells user why they need this.
-        print(
-            '\nTo find the [bold blue]RA and Dec[/] of your target, please put it in here.')
-        print("If your target can't be found, it will automatically redirect you to the website to put it in again.")
-
-        # * Asks for target name and tries to look it up then if it can, prints it out.
-        target = ask_for('\nTarget name: ')
-        query = Simbad.query_object(f'{target}')
-        query.pprint()
-        # * Asks the user if they wanted to be redirect_toed to the website.
-        redirect_to('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
-    except:
-        # * If theres an error it automatically just opens the website.s
-        webbrowser.open('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
+inp = InputsAndRedirects()
 
 
 def find_fits_dir():
@@ -104,12 +106,10 @@ def find_fits_dir():
             'Please make sure the file [bold blue]ends in .FITS, JPEG, or .PNG[/]')
         print('-------------------------------------------------------')
 
-        time.sleep(2)
-
         print(
-            '\nYou can put in a path for a directory or file. \n(  Directory EX: /Users/user/Pictures | File EX: /Users/user/Pictures/photo.png )')
+            '\nYou can put in a path for a directory or file. \n(  Directory EX: /Users/user/Pictures | File EX: /Users/user/Pictures/Kepler-1b.FITS )')
         print('\nTo [bold blue]copy a file path[/] on Mac right click on file, then hold alt, then select [bold blue]copy as pathname[/].')
-        dir_or_file = ask_for('\n: ', _type=str)
+        dir_or_file = inp.ask_for('\n: ', _type=str)
 
         # * Supported file extensions (mainly those just supported by astrometry.net)
         file_extensions = ['.FITS', '.JPEG', '.PNG',
@@ -135,7 +135,7 @@ def find_fits_dir():
             # * Asks for the image they want to upload.
             print(
                 '\nWhich [bold blue]image[/] would you like to [bold blue]upload[/]? (One of the paths above)')
-            upload_image = ask_for('\n:')
+            upload_image = inp.ask_for('\n:')
             return upload_image
 
         # * Given path is file
@@ -163,14 +163,14 @@ def search():
             print(
                 'Enter the values [bold]one at a time[/]. ( EX: 19 ( hit enter ), 07 ( hit enter ), 14 ( hit enter )')
             print('The same applies for [bold blue]Declination values[/].')
-            ra1 = ask_for('\n: ', _type=int)
-            ra2 = ask_for(': ', _type=int)
-            ra3 = ask_for(': ', _type=int)
+            ra1 = inp.ask_for('\n: ', _type=int)
+            ra2 = inp.ask_for(': ', _type=int)
+            ra3 = inp.ask_for(': ', _type=int)
 
             print("\n[bold blue]Declination[/], don't forget the + or -")
-            dec1 = ask_for('\n: ', _type=int)
-            dec2 = ask_for(': ', _type=int)
-            dec3 = ask_for(': ', _type=int)
+            dec1 = inp.ask_for('\n: ', _type=int)
+            dec2 = inp.ask_for(': ', _type=int)
+            dec3 = inp.ask_for(': ', _type=int)
 
             # * Conversion
             c = SkyCoord(f'{ra1}h{ra2}m{ra3}s',
@@ -189,7 +189,7 @@ def upload():
     """
     Using astroquery it asks the user for the
     FITS file then it uploads that file to nova.astronometry.net
-    then it solves the image, then redirect_tos the user to the website.
+    then it solves the image, then inp.redirect_tos the user to the website.
     """
 
     # * Gets file path for the image to be uploaded
@@ -226,13 +226,13 @@ def upload():
         print('\nSuccess! :thumbs_up:')
         print(
             '\nTo get the most possible information out of your image please go to the website below.')
-        redirect_to('http://nova.astrometry.net/users/20995')
+        inp.redirect_to('http://nova.astrometry.net/users/20995')
 
-        # * Looks up target with astroquery then can redirect_to user to the website
+        # * Looks up target with astroquery then can inp.redirect_to user to the website
         # * to use the aladin lite view to find comp stars, look around, etc.
-        simbad_query()
+        inp.simbad_query()
 
-        find_icrs_coordinates = ask_for(
+        find_icrs_coordinates = inp.ask_for(
             '\nDo you want to find the ICRS position for your target? (y/n): ').lower()
 
         if find_icrs_coordinates == 'y':
@@ -244,14 +244,14 @@ def upload():
                 # * Asks the user if they have any comparison stars they need the ICRS coordinates for
                 print(
                     '\nDo you have any [bold blue]comparison stars[/] that you want to get the [bold blue]ICRS coordinates[/] for? (y/n)')
-                comp_stars_icrs = ask_for('\n: ')
+                comp_stars_icrs = inp.ask_for('\n: ')
 
                 if comp_stars_icrs == 'y':
 
                     # * Number of comparison stars.
                     print(
                         '\nHow many [bold blue]comparison stars[/] do you have?')
-                    num_comp_stars = ask_for(
+                    num_comp_stars = inp.ask_for(
                         '\n: ', error_msg='Please put in an integer.', _type=int)
 
                     # * If number of comparison stars is over 10, repeat prompt.
@@ -260,6 +260,8 @@ def upload():
                     elif num_comp_stars <= 10:
                         for _ in range(num_comp_stars):
                             search()
+                elif comp_stars_icrs == 'n':
+                    convert_comp_stars = False
         elif find_icrs_coordinates == 'n':
             print('\nContinuing...')
             time.sleep(1.25)
@@ -267,7 +269,7 @@ def upload():
         # * redirects to the NASA exoplanet archive
         print(
             '\nThis is to get more information about your target such as the [bold blue]host star[/] information.')
-        redirect_to('https://exoplanetarchive.ipac.caltech.edu')
+        inp.redirect_to('https://exoplanetarchive.ipac.caltech.edu')
     else:
         #! Code to execute when solve fails
         print('\n[bold red]Failed[/bold red] to solve.')
@@ -295,12 +297,12 @@ if __name__ == "__main__":
         invalid = True
         while invalid:
             print(
-                '\nDo you want to upload [bold blue]more than one file[/]? (y/n)')
-            how_many = ask_for(
+                '\nDo you want to loop over this program to upload [bold blue]more than one file[/]? (y/n)')
+            how_many = inp.ask_for(
                 '\n: ', 'Error', str).lower()
 
             if how_many == 'y':
-                num_files = ask_for(
+                num_files = inp.ask_for(
                     '\nHow many files do you have that need to be uploaded?: ', 'Not the right data type.', _type=int)
                 if num_files > 15:
                     print(
@@ -321,7 +323,7 @@ if __name__ == "__main__":
 
     print('\nDo you have any [bold blue]more images[/] to be uploaded? '
           '(y/n)')
-    repeat = ask_for('\n: ', 'Error', str).lower()
+    repeat = inp.ask_for('\n: ', 'Error', str).lower()
 
     if repeat == 'y':
         upload()
