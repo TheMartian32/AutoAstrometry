@@ -36,7 +36,7 @@ class InputsAndRedirects():
 
             return inp
 
-    def redirect_to(self, url='https://www.google.com'):
+    def redirect_to(self, url=str):
         """
         Takes in a URL as a string and asks the user if they would like to be redirected
         to that URL.
@@ -266,10 +266,6 @@ def upload():
             print('\nContinuing...')
             time.sleep(1.25)
 
-        # * redirects to the NASA exoplanet archive
-        print(
-            '\nThis is to get more information about your target such as the [bold blue]host star[/] information.')
-        inp.redirect_to('https://exoplanetarchive.ipac.caltech.edu')
     else:
         #! Code to execute when solve fails
         print('\n[bold red]Failed[/bold red] to solve.')
