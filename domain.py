@@ -3,17 +3,14 @@ This script has many abilities. Using astroquery it can upload the image to astr
 Along with this it can use the SIMBAD service to get coordinates for your target. Then using astropy it can convert
 those coordinates to ICRS coordinates. Along with this it can do a lot of other things.
 """
-
+import os
 import webbrowser
 import time
 from astroquery.astrometry_net import AstrometryNet
 from astroquery.simbad import Simbad
 from rich import print
-from rich.table import Table
-from astropy.io import fits
 from astropy.coordinates import SkyCoord
 from astropy import units as u
-import os
 
 
 class InputsAndRedirects():
@@ -108,7 +105,7 @@ def find_fits_dir():
 
         print(
             '\nYou can put in a path for a directory or file. \n(  Directory EX: /Users/user/Pictures | File EX: /Users/user/Pictures/Kepler-1b.FITS )')
-        print('\nTo [bold blue]copy a file path[/] on Mac right click on file, then hold alt, then select [bold blue]copy as pathname[/].')
+        print('\nTo [bold blue]copy a file path[/] on Mac right click on the file or directory \nthen hold alt, then select [bold blue]copy as pathname[/].')
         dir_or_file = inp.ask_for('\n: ', _type=str)
 
         # * Supported file extensions (mainly those just supported by astrometry.net)
@@ -123,19 +120,33 @@ def find_fits_dir():
             # * For every file in the directory print out how many there are.
             for file_name in os.listdir(dir_or_file):
                 counter += 1
-                print(counter)
-                print('File: ')
+                print(f'\nFile {counter}: ')
                 # * Checks if the file is one of the supported file extensions.
                 if file_name.endswith(tuple(file_extensions)):
                     # * Prints out file path
                     print(
-                        f'\n{os.path.join(dir_or_file)}/{file_name}')
+                        f'{os.path.join(dir_or_file)}/{file_name}')
 
                     look_for = False
             # * Asks for the image they want to upload.
             print(
-                '\nWhich [bold blue]image[/] would you like to [bold blue]upload[/]? (One of the paths above)')
-            upload_image = inp.ask_for('\n:')
+                '\n-------------------------------------------------------------------------------------------')
+            print(
+                'Which [bold blue]image[/] would you like to [bold blue]upload[/]? (One of the paths above)')
+            not_file = True
+            while not_file:
+                upload_image = inp.ask_for(': ', _type=str)
+
+                if os.path.isfile(upload_image):
+                    not_file = False
+                else:
+                    print(
+                        '\nPlease [bold blue]re-enter[/] the path, the one you gave was invalid.')
+                    print(
+                        'If you accidentally put in / , just go into Finder and copy the file as a pathname, then paste it here.')
+            print(
+                '-------------------------------------------------------------------------------------------')
+
             return upload_image
 
         # * Given path is file
@@ -232,6 +243,7 @@ def upload():
         # * to use the aladin lite view to find comp stars, look around, etc.
         inp.simbad_query()
 
+        # * Finding ICRS Coordinates for target and comparison stars
         find_icrs_coordinates = inp.ask_for(
             '\nDo you want to find the ICRS position for your target? (y/n): ').lower()
 
@@ -260,6 +272,7 @@ def upload():
                     elif num_comp_stars <= 10:
                         for _ in range(num_comp_stars):
                             search()
+                            convert_comp_stars = False
                 elif comp_stars_icrs == 'n':
                     convert_comp_stars = False
         elif find_icrs_coordinates == 'n':
@@ -300,11 +313,11 @@ if __name__ == "__main__":
             if how_many == 'y':
                 num_files = inp.ask_for(
                     '\nHow many files do you have that need to be uploaded?: ', 'Not the right data type.', _type=int)
-                if num_files > 15:
+                if num_files > 25:
                     print(
-                        'Sorry, the [red]number of files[/red] cannot be over 15.')
+                        'Sorry, the [red]number of files[/red] cannot be over 25.')
 
-                elif num_files <= 15:
+                elif num_files <= 25:
                     for _ in range(num_files):
                         # * For every file the user needs to upload, it calls the upload function.
                         upload()
