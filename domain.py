@@ -227,8 +227,6 @@ def search():
     pixel_pos()
 
 
-search()
-
 
 def upload():
     """
