@@ -10,7 +10,8 @@ from astroquery.astrometry_net import AstrometryNet
 from astroquery.simbad import Simbad
 from rich import print
 from astropy.coordinates import SkyCoord
-from astropy import units as u
+from astropy.io import fits
+from astropy.wcs import WCS
 
 
 class InputsAndRedirects():
@@ -183,10 +184,10 @@ def search():
             dec2 = inp.ask_for(': ', _type=int)
             dec3 = inp.ask_for(': ', _type=int)
 
-            # * Conversion
+            #! Just keeping this here to ensure that the right values for RA and Dec are correct.
             c = SkyCoord(f'{ra1}h{ra2}m{ra3}s',
-                         f'{dec1}d{dec2}m{dec3}s', frame='icrs', unit='deg')
-            print(c)
+                         f'{dec1}d{dec2}m{dec3}s', frame='fk5', unit='deg')
+
         # * Value error, user didn't enter in the right values
         except ValueError:
             print('\n[red]Value Error ocurred[/]')
@@ -194,6 +195,39 @@ def search():
         else:
             # * Got a result so break out of loop
             search_for_ra_dec = False
+
+    def pixel_pos():
+        # * Conversion
+        not_correct = True
+        while not_correct:
+            try:
+                print(
+                    '\nPlease put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
+                print('It should be titled [bold blue]new-image.fits[/].')
+                filename = find_fits_dir()
+
+                hdu = fits.open(filename)
+                header = hdu[0].header
+
+                wcs = WCS(header)
+
+                coord = SkyCoord(
+                    f'{ra1}h{ra2}m{ra3}s {dec1}d{dec2}m{dec3}s', frame='fk5')
+
+                px = wcs.world_to_pixel(coord)
+                print('\nPixel values:')
+                return print(px)
+            except:
+                print(
+                    '\nPlease put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
+            else:
+                # * Got correct result so break out of loop
+                not_correct = False
+
+    pixel_pos()
+
+
+search()
 
 
 def upload():
@@ -245,7 +279,7 @@ def upload():
 
         # * Finding ICRS Coordinates for target and comparison stars
         find_icrs_coordinates = inp.ask_for(
-            '\nDo you want to find the ICRS position for your target? (y/n): ').lower()
+            '\nDo you want to find the pixel position for your target? (y/n): ').lower()
 
         if find_icrs_coordinates == 'y':
             search()
@@ -255,7 +289,7 @@ def upload():
 
                 # * Asks the user if they have any comparison stars they need the ICRS coordinates for
                 print(
-                    '\nDo you have any [bold blue]comparison stars[/] that you want to get the [bold blue]ICRS coordinates[/] for? (y/n)')
+                    '\nDo you have any [bold blue]comparison stars[/] that you want to get the [bold blue]pixel coordinates[/] for? (y/n)')
                 comp_stars_icrs = inp.ask_for('\n: ')
 
                 if comp_stars_icrs == 'y':
