@@ -138,6 +138,7 @@ def find_fits_dir():
             while not_file:
                 upload_image = inp.ask_for(': ', _type=str)
 
+                # * Checks that the path given is a file
                 if os.path.isfile(upload_image):
                     not_file = False
                 else:
@@ -169,16 +170,18 @@ def search():
     while search_for_ra_dec:
 
         try:
-            # * Uses SkyCoord to convert RA and Dec values to ICRS coordinates
+            # * Uses SkyCoord to verify correct RA and Declinaction values
             print(
                 '\n[bold blue]Right Ascension[/] and [bold blue]Declination[/] for your target.')
             print(
                 'Enter the values [bold]one at a time[/]. ( EX: 19 ( hit enter ), 07 ( hit enter ), 14 ( hit enter )')
             print('The same applies for [bold blue]Declination values[/].')
+            # * RA
             ra1 = inp.ask_for('\n: ', _type=int)
             ra2 = inp.ask_for(': ', _type=int)
             ra3 = inp.ask_for(': ', _type=int)
 
+            # * Declination
             print("\n[bold blue]Declination[/], don't forget the + or -")
             dec1 = inp.ask_for('\n: ', _type=int)
             dec2 = inp.ask_for(': ', _type=int)
@@ -201,23 +204,28 @@ def search():
         not_correct = True
         while not_correct:
             try:
+                # * Asks user to put in the path to the plate solved image from https://nova.astrometry.net.
                 print(
                     '\nPlease put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
                 print('It should be titled [bold blue]new-image.fits[/].')
+                # * Runs the find_fits_dir function to determine the path to check the image.
                 filename = find_fits_dir()
 
+                # * Opens file and looks at header data
                 hdu = fits.open(filename)
                 header = hdu[0].header
 
+                # * Applies WCS to header ( world coordinate system ). Also checks that the RA and Dec values are in fk5.
                 wcs = WCS(header)
-
                 coord = SkyCoord(
                     f'{ra1}h{ra2}m{ra3}s {dec1}d{dec2}m{dec3}s', frame='fk5')
 
+                # * Converts the RA and Dec values ( in degrees ) to pixel values within the image. It then also prints them out.
                 px = wcs.world_to_pixel(coord)
                 print('\nPixel values:')
                 return print(px)
             except:
+                # * File that was given was not the plate solved image from https://nova.astrometry.net.
                 print(
                     '\nPlease put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
             else:
@@ -225,7 +233,6 @@ def search():
                 not_correct = False
 
     pixel_pos()
-
 
 
 def upload():
@@ -279,6 +286,7 @@ def upload():
         find_icrs_coordinates = inp.ask_for(
             '\nDo you want to find the pixel position for your target? (y/n): ').lower()
 
+        # * User does want to find pixel coordinates
         if find_icrs_coordinates == 'y':
             search()
 
@@ -301,12 +309,19 @@ def upload():
                     # * If number of comparison stars is over 10, repeat prompt.
                     if num_comp_stars > 10:
                         print('\nThe limit is 10 comparison stars.')
+
+                    # * If the number of comparison stars is 10 or less than 10, it calls the search function that amount of times.
                     elif num_comp_stars <= 10:
                         for _ in range(num_comp_stars):
                             search()
+                            # * Breaks out of loop
                             convert_comp_stars = False
+
+                # * Don't have any comparison stars / don't need the pixel coordinates
                 elif comp_stars_icrs == 'n':
                     convert_comp_stars = False
+
+        # * Doesn't want to find pixel coordinates.
         elif find_icrs_coordinates == 'n':
             print('\nContinuing...')
             time.sleep(1.25)
@@ -317,11 +332,13 @@ def upload():
 
 
 if __name__ == "__main__":
+    # * Information the user probably needs to know before using the program.
     print('\n----------------------------------------------------------------------------------')
     print('To use this software please register for an account '
           'on http://nova.astrometry.net')
     print('----------------------------------------------------------------------------------')
 
+    # * Termination instructions and ways to get around a TIMEOUT error.
     print('\nTo [bold blue]terminate the program[/] press [b]Control+C[/].')
     print(
         '\nIf you get a [bold blue]TIMEOUT ERROR[/], check the link above for your image.')
@@ -362,6 +379,8 @@ if __name__ == "__main__":
 
     rerun()
 
+    # * Asks the user if they have any more images they want to upload to nova.astrometry.net
+    # * If not it terminates the program.
     print('\nDo you have any [bold blue]more images[/] to be uploaded? '
           '(y/n)')
     repeat = inp.ask_for('\n: ', 'Error', str).lower()
