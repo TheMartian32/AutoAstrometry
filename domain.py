@@ -1,8 +1,9 @@
 """
 This script has many abilities. Using astroquery it can upload the image to astrometry.net and get a plate solution.
 Along with this it can use the SIMBAD service to get coordinates for your target. Then using astropy it can convert
-those coordinates to ICRS coordinates. Along with this it can do a lot of other things.
+those coordinates to pixel coordinates within the image and get them back to you.
 """
+
 import os
 import webbrowser
 import time
@@ -44,18 +45,18 @@ class InputsAndRedirects():
         """
         invalid = True
         while invalid:
-            # * Asks the user if they want to be inp.redirect_toed to the website
+            # Asks the user if they want to redirected to the website
             print(
                 f'\nWould you like to be [bold blue]redirected[/] to: {url} ?')
             inp.redirect_to = inp.ask_for(
                 '(y/n): ', error_msg='Wrong data type', _type=str).lower()
 
-            # * If they do want to go to the website it opens it then breaks out of the loop.
+            #  If they do want to go to the website it opens it then breaks out of the loop.
             if inp.redirect_to[0] == 'y':
                 webbrowser.open_new_tab(f'{url}')
                 invalid = False
 
-            # * They don't want to go to the website so it breaks out of the loop.
+            # They don't want to go to the website so it breaks out of the loop.
             elif inp.redirect_to[0] == 'n':
                 print('\nContinuing...')
                 invalid = False
@@ -68,7 +69,7 @@ class InputsAndRedirects():
 
         # * Tries to query the target using astroquery if it fails it just opens the SIMBAD website
         try:
-            # * Tells user why they need this.
+            # Tells user why they need this.
             print(
                 '\nTo find the [bold blue]RA and Dec[/] of your target, please put it in here.')
             print("If your target can't be found, it will automatically redirect you to the website to put it in again.")
@@ -77,7 +78,7 @@ class InputsAndRedirects():
             target = inp.ask_for('\nTarget name: ')
             query = Simbad.query_object(f'{target}')
             query.pprint()
-            # * Asks the user if they wanted to be inp.redirect_toed to the website.
+            # * Asks the user if they wanted to be redirected to the website.
             inp.redirect_to('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
         except:
             # * If theres an error it automatically just opens the website.s
@@ -113,23 +114,23 @@ def find_fits_dir():
         file_extensions = ['.FITS', '.JPEG', '.PNG',
                            '.FIT', '.fits', '.fit', '.fts']
 
-        # * File counter
+        #  File counter
         counter = 0
 
         # * Given path is directory
         if os.path.isdir(dir_or_file):
-            # * For every file in the directory print out how many there are.
+            #  For every file in the directory print out how many there are.
             for file_name in os.listdir(dir_or_file):
                 counter += 1
                 print(f'\nFile {counter}: ')
-                # * Checks if the file is one of the supported file extensions.
+                #  Checks if the file is one of the supported file extensions.
                 if file_name.endswith(tuple(file_extensions)):
-                    # * Prints out file path
+                    #  Prints out file path
                     print(
                         f'{os.path.join(dir_or_file)}/{file_name}')
 
                     look_for = False
-            # * Asks for the image they want to upload.
+            #  Asks for the image they want to upload.
             print(
                 '\n-------------------------------------------------------------------------------------------')
             print(
@@ -148,13 +149,15 @@ def find_fits_dir():
                         'If you accidentally put in / , just go into Finder and copy the file as a pathname, then paste it here.')
             print(
                 '-------------------------------------------------------------------------------------------')
-
+            # Unbound ( might not return anything )
             return upload_image
 
         # * Given path is file
         if os.path.isfile(dir_or_file):
+
             # * Finds out if the file is one of the supported file extensions.
             if dir_or_file.endswith(tuple(file_extensions)):
+
                 # * Prints out path and breaks out of loop.
                 print(f'\n{os.path.join(dir_or_file)}')
                 look_for = False
@@ -196,11 +199,11 @@ def search():
             print('\n[red]Value Error ocurred[/]')
             print('Please [bold blue]re-enter your RA and Dec[/]')
         else:
-            # * Got a result so break out of loop
+            # Got a result so break out of loop
             search_for_ra_dec = False
 
     def pixel_pos():
-        # * Conversion
+        # Conversion
         not_correct = True
         while not_correct:
             try:
@@ -211,25 +214,25 @@ def search():
                 # * Runs the find_fits_dir function to determine the path to check the image.
                 filename = find_fits_dir()
 
-                # * Opens file and looks at header data
+                # Opens the file and looks at header data
                 hdu = fits.open(filename)
                 header = hdu[0].header
 
-                # * Applies WCS to header ( world coordinate system ). Also checks that the RA and Dec values are in fk5.
+                #  Applies WCS to header ( world coordinate system ). Also checks that the RA and Dec values are in fk5.
                 wcs = WCS(header)
                 coord = SkyCoord(
                     f'{ra1}h{ra2}m{ra3}s {dec1}d{dec2}m{dec3}s', frame='fk5')
 
-                # * Converts the RA and Dec values ( in degrees ) to pixel values within the image. It then also prints them out.
+                # * Converts the RA and Dec values to pixel values within the image. It then also prints them out.
                 px = wcs.world_to_pixel(coord)
-                print('\nPixel values:')
+                print('\nPixel coordinates:')
                 return print(px)
             except:
                 # * File that was given was not the plate solved image from https://nova.astrometry.net.
                 print(
                     '\nPlease put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
             else:
-                # * Got correct result so break out of loop
+                # Got correct result so break out of loop
                 not_correct = False
 
     pixel_pos()
@@ -239,13 +242,13 @@ def upload():
     """
     Using astroquery it asks the user for the
     FITS file then it uploads that file to nova.astronometry.net
-    then it solves the image, then inp.redirect_tos the user to the website.
+    then it solves the image, then redirects the user to the website.
     """
 
     # * Gets file path for the image to be uploaded
     image = find_fits_dir()
 
-    # * Creating instance of astrometry.net
+    # * Creating instance of astrometry.net and API key
     ast = AstrometryNet()
     ast.api_key = 'bchkvzadjuswddhg'
 
@@ -278,11 +281,11 @@ def upload():
             '\nTo get the most possible information out of your image please go to the website below.')
         inp.redirect_to('http://nova.astrometry.net/users/20995')
 
-        # * Looks up target with astroquery then can inp.redirect_to user to the website
-        # * to use the aladin lite view to find comp stars, look around, etc.
+        # Looks up target with astroquery then can inp.redirect_to user to the website
+        # to use the aladin lite view to find comp stars, look around, etc.
         inp.simbad_query()
 
-        # * Finding ICRS Coordinates for target and comparison stars
+        # * Finding pixel Coordinates for target and comparison stars
         find_icrs_coordinates = inp.ask_for(
             '\nDo you want to find the pixel position for your target? (y/n): ').lower()
 
@@ -293,7 +296,7 @@ def upload():
             convert_comp_stars = True
             while convert_comp_stars:
 
-                # * Asks the user if they have any comparison stars they need the ICRS coordinates for
+                # * Asks the user if they have any comparison stars they need the pixel coordinates for
                 print(
                     '\nDo you have any [bold blue]comparison stars[/] that you want to get the [bold blue]pixel coordinates[/] for? (y/n)')
                 comp_stars_icrs = inp.ask_for('\n: ')
@@ -306,22 +309,22 @@ def upload():
                     num_comp_stars = inp.ask_for(
                         '\n: ', error_msg='Please put in an integer.', _type=int)
 
-                    # * If number of comparison stars is over 10, repeat prompt.
+                    # If number of comparison stars is over 10, repeat prompt.
                     if num_comp_stars > 10:
                         print('\nThe limit is 10 comparison stars.')
 
-                    # * If the number of comparison stars is 10 or less than 10, it calls the search function that amount of times.
+                    # If the number of comparison stars is 10 or less than 10, it calls the search function that amount of times.
                     elif num_comp_stars <= 10:
                         for _ in range(num_comp_stars):
                             search()
                             # * Breaks out of loop
                             convert_comp_stars = False
 
-                # * Don't have any comparison stars / don't need the pixel coordinates
+                # Don't have any comparison stars / don't need the pixel coordinates
                 elif comp_stars_icrs == 'n':
                     convert_comp_stars = False
 
-        # * Doesn't want to find pixel coordinates.
+        # Doesn't want to find pixel coordinates.
         elif find_icrs_coordinates == 'n':
             print('\nContinuing...')
             time.sleep(1.25)
@@ -332,6 +335,7 @@ def upload():
 
 
 if __name__ == "__main__":
+    # * Startup code
     # * Information the user probably needs to know before using the program.
     print('\n----------------------------------------------------------------------------------')
     print('To use this software please register for an account '
@@ -351,7 +355,7 @@ if __name__ == "__main__":
         """
         Loops over the upload method as many times as the user needs.
         """
-        # * While the prompt isnt y or n it repeats it
+        # While the prompt isnt y or n it repeats it
         invalid = True
         while invalid:
             print(
@@ -368,15 +372,14 @@ if __name__ == "__main__":
 
                 elif num_files <= 25:
                     for _ in range(num_files):
-                        # * For every file the user needs to upload, it calls the upload function.
+                        # For every file the user needs to upload, it calls the upload function.
                         upload()
                         invalid = False
 
             elif how_many == 'n':
-                # * Uploads only one file.
+                # Uploads only one file.
                 upload()
                 invalid = False
-
     rerun()
 
     # * Asks the user if they have any more images they want to upload to nova.astrometry.net
