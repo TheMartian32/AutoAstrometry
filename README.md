@@ -1,4 +1,4 @@
-# Astrometry
+# AutoAstrometry
 
 This script is for the purpose of automating the uploading of an image to nova.astrometry.net through python. It can also redirect the user to multiple useful sites to do useful things with the information they have. It can also grab pixel coordinates of a specified RA and Dec using a plate solved image.
 
