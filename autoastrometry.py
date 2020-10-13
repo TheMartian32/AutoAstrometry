@@ -14,6 +14,7 @@ from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy.wcs import WCS
 
+
 class InputsAndRedirects():
     def ask_for(self, prompt, error_msg=None, _type=None):
         """ While the desired prompt is not given, it repeats the prompt. """
@@ -48,7 +49,7 @@ class InputsAndRedirects():
             print(
                 f'\nWould you like to be [bold blue]redirected[/] to: {url} ?')
             inp.redirect_to = inp.ask_for(
-                '(y/n): ', error_msg='Wrong data type', _type=str).lower()
+                '(y/n): ', error_msg='\nPlease put in a letter. Y or N', _type=str).lower()
 
             #  If they do want to go to the website it opens it then breaks out of the loop.
             if inp.redirect_to[0] == 'y':
@@ -75,8 +76,13 @@ class InputsAndRedirects():
 
             # * Asks for target name and tries to look it up then if it can, prints it out.
             target = inp.ask_for('\nTarget name: ')
+            target = target.strip('')
             query = Simbad.query_object(f'{target}')
+            print('\n*********************************************************************************************************************************************')
+            print('[bold blue]Target info[/]:')
             query.pprint()
+            print('*********************************************************************************************************************************************')
+
             # * Asks the user if they wanted to be redirected to the website.
             inp.redirect_to('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
         except:
