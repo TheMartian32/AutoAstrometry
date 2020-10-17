@@ -76,7 +76,7 @@ class InputsAndRedirects():
 
             # * Asks for target name and tries to look it up then if it can, prints it out.
             target = inp.ask_for('\nTarget name: ')
-            target = target.strip('')
+            target = target.strip(' ')
             query = Simbad.query_object(f'{target}')
             print('\n*********************************************************************************************************************************************')
             print('[bold blue]Target info[/]:')
@@ -86,317 +86,211 @@ class InputsAndRedirects():
             # * Asks the user if they wanted to be redirected to the website.
             inp.redirect_to('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
         except:
-            # * If theres an error it automatically just opens the website.s
+            # * If theres an error it automatically just opens the website.
             webbrowser.open('http://simbad.u-strasbg.fr/simbad/sim-fbasic')
 
 
 inp = InputsAndRedirects()
 
 
-def find_fits_dir():
-    """
-    Gets directory or file of the FITS image.
+class main():
+    ################################################################################################################################################################
 
-    Returns:
-        File or filepath: Returns the filepath or file of the FITS image.
-    """
-    look_for = True
+    def find_image(self):
+        look_for = True
 
-    while look_for:
-            # * Asks for the directory of the FITS file.
-        print('\n-------------------------------------------------------')
-        print('What is the path to the image file or directory?')
-        print(
-            'Please make sure the file [bold blue]ends in .FITS, JPEG, or .PNG[/]')
-        print('-------------------------------------------------------')
+        while look_for:
+                # * Asks for the directory of the FITS file.
+            print('\n-------------------------------------------------------')
+            print('What is the path to the image file or directory?')
+            print(
+                'Please make sure the file [bold blue]ends in .FITS, JPEG, or .PNG[/]')
+            print('-------------------------------------------------------')
 
-        print(
-            '\nYou can put in a path for a directory or file. \n(  Directory EX: /Users/user/Pictures | File EX: /Users/user/Pictures/Kepler-1b.FITS )')
-        print('\nTo [bold blue]copy a file path[/] on Mac right click on the file or directory \nthen hold alt, then select [bold blue]copy as pathname[/].')
-        dir_or_file = inp.ask_for('\n: ', _type=str)
+            print(
+                '\nYou can put in a path for a directory or file. \n(  Directory EX: /Users/user/Pictures | File EX: /Users/user/Pictures/Kepler-1b.FITS )')
+            print('\nTo [bold blue]copy a file path[/] on Mac right click on the file or directory \nthen hold alt, then select [bold blue]copy as pathname[/].')
+            dir_or_file = inp.ask_for('\n: ', _type=str)
 
-        # * Supported file extensions (mainly those just supported by astrometry.net)
-        file_extensions = ['.FITS', '.JPEG', '.PNG',
-                           '.FIT', '.fits', '.fit', '.fts']
+            # * Supported file extensions (mainly those just supported by astrometry.net)
+            file_extensions = ['.FITS', '.JPEG', '.PNG',
+                               '.FIT', '.fits', '.fit', '.fts']
 
-        #  File counter
-        counter = 0
+            #  File counter
+            counter = 0
 
-        # * Given path is directory
-        if os.path.isdir(dir_or_file):
-            #  For every file in the directory print out how many there are.
-            for file_name in os.listdir(dir_or_file):
-                counter += 1
-                print(f'\nFile {counter}: ')
-                #  Checks if the file is one of the supported file extensions.
-                if file_name.endswith(tuple(file_extensions)):
-                    #  Prints out file path
-                    print(
-                        f'{os.path.join(dir_or_file)}/{file_name}')
+            # * Given path is directory
+            if os.path.isdir(dir_or_file):
+                #  For every file in the directory print out how many there are.
+                for file_name in os.listdir(dir_or_file):
+                    counter += 1
+                    print(f'\nFile {counter}: ')
+                    #  Checks if the file is one of the supported file extensions.
+                    if file_name.endswith(tuple(file_extensions)):
+                        #  Prints out file path
+                        print(
+                            f'{os.path.join(dir_or_file)}/{file_name}')
 
+                        look_for = False
+                #  Asks for the image they want to upload.
+                print(
+                    '\n-------------------------------------------------------------------------------------------')
+                print(
+                    'Which [bold blue]image[/] would you like to [bold blue]upload[/]? (One of the paths above)')
+                not_file = True
+                while not_file:
+                    upload_image = inp.ask_for(': ', _type=str)
+
+                    # * Checks that the path given is a file
+                    if os.path.isfile(upload_image):
+                        not_file = False
+                    else:
+                        print(
+                            '\nPlease [bold blue]re-enter[/] the path, the one you gave was invalid.')
+                        print(
+                            'If you accidentally put in / , just go into Finder and copy the file as a pathname, then paste it here.')
+                print(
+                    '-------------------------------------------------------------------------------------------')
+                # Unbound ( might not return anything )
+                return upload_image
+
+            # * Given path is file
+            if os.path.isfile(dir_or_file):
+
+                # * Finds out if the file is one of the supported file extensions.
+                if dir_or_file.endswith(tuple(file_extensions)):
+
+                    # * Prints out path and breaks out of loop.
+                    print(f'\n{os.path.join(dir_or_file)}')
                     look_for = False
-            #  Asks for the image they want to upload.
-            print(
-                '\n-------------------------------------------------------------------------------------------')
-            print(
-                'Which [bold blue]image[/] would you like to [bold blue]upload[/]? (One of the paths above)')
-            not_file = True
-            while not_file:
-                upload_image = inp.ask_for(': ', _type=str)
+                    return dir_or_file
 
-                # * Checks that the path given is a file
-                if os.path.isfile(upload_image):
-                    not_file = False
-                else:
-                    print(
-                        '\nPlease [bold blue]re-enter[/] the path, the one you gave was invalid.')
-                    print(
-                        'If you accidentally put in / , just go into Finder and copy the file as a pathname, then paste it here.')
-            print(
-                '-------------------------------------------------------------------------------------------')
-            # Unbound ( might not return anything )
-            return upload_image
+    ################################################################################################################################################################
 
-        # * Given path is file
-        if os.path.isfile(dir_or_file):
+    def upload_image(self, image):
+        # * Creating instance of astrometry.net and API key
+        ast = AstrometryNet()
+        ast.api_key = 'bchkvzadjuswddhg'
 
-            # * Finds out if the file is one of the supported file extensions.
-            if dir_or_file.endswith(tuple(file_extensions)):
+        try_again = True
+        submission_id = None
 
-                # * Prints out path and breaks out of loop.
-                print(f'\n{os.path.join(dir_or_file)}')
-                look_for = False
-                return dir_or_file
-
-
-def search():
-    """
-    Using RA and Dec coordinates this function can convert them to
-    degrees in the ICRS frame. ( I have zero idea what im talking about )
-    """
-    search_for_ra_dec = True
-    while search_for_ra_dec:
-
-        try:
-            # * Uses SkyCoord to verify correct RA and Declinaction values
-            print(
-                '\n[bold blue]Right Ascension[/] and [bold blue]Declination[/] for your target.')
-            print(
-                'Enter the values [bold]one at a time[/]. ( EX: 19 ( hit enter ), 07 ( hit enter ), 14 ( hit enter )')
-            print('The same applies for [bold blue]Declination values[/].')
-            # * RA
-            ra1 = inp.ask_for('\n: ', _type=int)
-            ra2 = inp.ask_for(': ', _type=int)
-            ra3 = inp.ask_for(': ', _type=int)
-
-            # * Declination
-            print("\n[bold blue]Declination[/], don't forget the + or -")
-            dec1 = inp.ask_for('\n: ', _type=int)
-            dec2 = inp.ask_for(': ', _type=int)
-            dec3 = inp.ask_for(': ', _type=int)
-
-            #! Just keeping this here to ensure that the right values for RA and Dec are correct.
-            c = SkyCoord(f'{ra1}h{ra2}m{ra3}s',
-                         f'{dec1}d{dec2}m{dec3}s', frame='fk5', unit='deg')
-
-        # * Value error, user didn't enter in the right values
-        except ValueError:
-            print('\n[red]Value Error ocurred[/]')
-            print('Please [bold blue]re-enter your RA and Dec[/]')
-        else:
-            # Got a result so break out of loop
-            search_for_ra_dec = False
-
-    def pixel_pos():
-        # Conversion
-        not_correct = True
-        while not_correct:
+        while try_again:
             try:
-                # * Asks user to put in the path to the plate solved image from https://nova.astrometry.net.
-                print(
-                    '\nPlease put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
-                print('It should be titled [bold blue]new-image.fits[/].')
-                # * Runs the find_fits_dir function to determine the path to check the image.
-                filename = find_fits_dir()
-
-                # Opens the file and looks at header data
-                hdu = fits.open(filename)
-                header = hdu[0].header
-
-                #  Applies WCS to header ( world coordinate system ). Also checks that the RA and Dec values are in fk5.
-                wcs = WCS(header)
-                coord = SkyCoord(
-                    f'{ra1}h{ra2}m{ra3}s {dec1}d{dec2}m{dec3}s', frame='fk5')
-
-                # * Converts the RA and Dec values to pixel values within the image. It then also prints them out.
-                px = wcs.world_to_pixel(coord)
-                print('\nPixel coordinates:')
-                return print(px)
-            except:
-                # * File that was given was not the plate solved image from https://nova.astrometry.net.
-                print(
-                    '\nPlease put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
+                if not submission_id:
+                    # * Solves the image from the file path
+                    wcs_header = ast.solve_from_image(f'{image}', force_image_upload=True,
+                                                      submission_id=submission_id, solve_timeout=1000)
+                else:
+                    # * Time is in seconds.
+                    wcs_header = ast.monitor_submission(
+                        submission_id, solve_timeout=1000)
+            except TimeoutError as e:
+                # * Timeout error, never triggers. Basically useless code since it never triggers during timeout error
+                submission_id = e.args[1]
+                print('\nThere was a timeout error. ( Process took to long ).')
+                print('Astometry.net could also be down at the moment.')
             else:
-                # Got correct result so break out of loop
-                not_correct = False
+                #! got a result, so terminate
+                try_again = False
 
-    pixel_pos()
+        if wcs_header:
+            # * Code to execute when solve succeeds
+            print('\nSuccess! :thumbs_up:')
+            print(
+                '\nTo get the most possible information out of your image please go to the website below.')
+            inp.redirect_to('http://nova.astrometry.net/users/20995')
 
+            # Looks up target with astroquery then can inp.redirect_to user to the website
+            # to use the aladin lite view to find comp stars, look around, etc.
+            inp.simbad_query()
 
-def upload():
-    """
-    Using astroquery it asks the user for the
-    FITS file then it uploads that file to nova.astronometry.net
-    then it solves the image, then redirects the user to the website.
-    """
-
-    # * Gets file path for the image to be uploaded
-    image = find_fits_dir()
-
-    # * Creating instance of astrometry.net and API key
-    ast = AstrometryNet()
-    ast.api_key = 'bchkvzadjuswddhg'
-
-    try_again = True
-    submission_id = None
-
-    while try_again:
-        try:
-            if not submission_id:
-                # * Solves the image from the file path
-                wcs_header = ast.solve_from_image(f'{image}', force_image_upload=True,
-                                                  submission_id=submission_id, solve_timeout=1000)
-            else:
-                # * Time is in seconds.
-                wcs_header = ast.monitor_submission(
-                    submission_id, solve_timeout=1000)
-        except TimeoutError as e:
-            # * Timeout error, never triggers. Basically useless code since it never triggers during timeout error
-            submission_id = e.args[1]
-            print('\nThere was a timeout error. ( Process took to long ).')
-            print('Astometry.net could also be down at the moment.')
         else:
-            #! got a result, so terminate
-            try_again = False
+            #! Code to execute when solve fails
+            print('\n[bold red]Failed[/bold red] to solve.')
 
-    if wcs_header:
-        # * Code to execute when solve succeeds
-        print('\nSuccess! :thumbs_up:')
-        print(
-            '\nTo get the most possible information out of your image please go to the website below.')
-        inp.redirect_to('http://nova.astrometry.net/users/20995')
+    ################################################################################################################################################################
 
-        # Looks up target with astroquery then can inp.redirect_to user to the website
-        # to use the aladin lite view to find comp stars, look around, etc.
-        inp.simbad_query()
+    def find_px_coords(self, new_image):
+        search_for_ra_dec = True
+        while search_for_ra_dec:
 
-        # * Finding pixel Coordinates for target and comparison stars
-        find_icrs_coordinates = inp.ask_for(
-            '\nDo you want to find the pixel position for your target? (y/n): ').lower()
-
-        # * User does want to find pixel coordinates
-        if find_icrs_coordinates == 'y':
-            search()
-
-            convert_comp_stars = True
-            while convert_comp_stars:
-
-                # * Asks the user if they have any comparison stars they need the pixel coordinates for
+            try:
+                # * Uses SkyCoord to verify correct RA and Declinaction values
                 print(
-                    '\nDo you have any [bold blue]comparison stars[/] that you want to get the [bold blue]pixel coordinates[/] for? (y/n)')
-                comp_stars_icrs = inp.ask_for('\n: ')
+                    '\n[bold blue]Right Ascension[/] and [bold blue]Declination[/] for your target.')
+                print(
+                    'Enter the values [bold]one at a time[/]. ( EX: 19 ( hit enter ), 07 ( hit enter ), 14 ( hit enter )')
+                print('The same applies for [bold blue]Declination values[/].')
+                # * RA
+                ra1 = inp.ask_for('\n: ', _type=int)
+                ra2 = inp.ask_for(': ', _type=int)
+                ra3 = inp.ask_for(': ', _type=int)
 
-                if comp_stars_icrs == 'y':
+                # * Declination
+                print("\n[bold blue]Declination[/], don't forget the + or -")
+                dec1 = inp.ask_for('\n: ', _type=int)
+                dec2 = inp.ask_for(': ', _type=int)
+                dec3 = inp.ask_for(': ', _type=int)
 
-                    # * Number of comparison stars.
+                #! Just keeping this here to ensure that the right values for RA and Dec are correct.
+                c = SkyCoord(f'{ra1}h{ra2}m{ra3}s',
+                             f'{dec1}d{dec2}m{dec3}s', frame='fk5', unit='deg')
+
+            # * Value error, user didn't enter in the right values
+            except ValueError:
+                print('\n[red]Value Error ocurred[/]')
+                print('Please [bold blue]re-enter your RA and Dec[/]')
+            else:
+                # Got a result so break out of loop
+                search_for_ra_dec = False
+
+        def pixel_pos():
+            # Conversion
+            not_correct = True
+            while not_correct:
+                try:
+                    # * Asks user to put in the path to the plate solved image from https://nova.astrometry.net.
                     print(
-                        '\nHow many [bold blue]comparison stars[/] do you have?')
-                    num_comp_stars = inp.ask_for(
-                        '\n: ', error_msg='Please put in an integer.', _type=int)
+                        '\nPlease put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
+                    print('It should be titled [bold blue]new-image.fits[/].')
+                    # * Runs the find_fits_dir function to determine the path to check the image.
+                    filename = new_image
 
-                    # If number of comparison stars is over 10, repeat prompt.
-                    if num_comp_stars > 10:
-                        print('\nThe limit is 10 comparison stars.')
+                    # Opens the file and looks at header data
+                    hdu = fits.open(filename)
+                    header = hdu[0].header
 
-                    # If the number of comparison stars is 10 or less than 10, it calls the search function that amount of times.
-                    elif num_comp_stars <= 10:
-                        for _ in range(num_comp_stars):
-                            search()
-                            # * Breaks out of loop
-                            convert_comp_stars = False
+                    #  Applies WCS to header ( world coordinate system ). Also checks that the RA and Dec values are in fk5.
+                    wcs = WCS(header)
+                    coord = SkyCoord(
+                        f'{ra1}h{ra2}m{ra3}s {dec1}d{dec2}m{dec3}s', frame='fk5')
 
-                # Don't have any comparison stars / don't need the pixel coordinates
-                elif comp_stars_icrs == 'n':
-                    convert_comp_stars = False
+                    # * Converts the RA and Dec values to pixel values within the image. It then also prints them out.
+                    px = wcs.world_to_pixel(coord)
+                    print('\nPixel coordinates:')
+                    return print(px)
+                except:
+                    # * File that was given was not the plate solved image from https://nova.astrometry.net.
+                    print(
+                        '\nPlease put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
+                else:
+                    # Got correct result so break out of loop
+                    not_correct = False
 
-        # Doesn't want to find pixel coordinates.
-        elif find_icrs_coordinates == 'n':
-            print('\nContinuing...')
-            time.sleep(1.25)
+        pixel_pos()
 
-    else:
-        #! Code to execute when solve fails
-        print('\n[bold red]Failed[/bold red] to solve.')
+    ################################################################################################################################################################
 
 
 if __name__ == "__main__":
-    # * Startup code
-    # * Information the user probably needs to know before using the program.
-    print('\n----------------------------------------------------------------------------------')
-    print('To use this software please register for an account '
-          'on http://nova.astrometry.net')
-    print('----------------------------------------------------------------------------------')
+    m = main()
+    m.upload_image(m.find_image())
 
-    # * Termination instructions and ways to get around a TIMEOUT error.
-    print('\nTo [bold blue]terminate the program[/] press [b]Control+C[/].')
-    print(
-        '\nIf you get a [bold blue]TIMEOUT ERROR[/], check the link above for your image.')
-    time.sleep(1.25)
-
-    print(
-        '\n******************** [bold blue]Beginning of program[/] ********************')
-
-    def rerun():
-        """
-        Loops over the upload method as many times as the user needs.
-        """
-        # While the prompt isnt y or n it repeats it
-        invalid = True
-        while invalid:
-            print(
-                '\nDo you want to loop over this program to upload [bold blue]more than one file[/]? (y/n)')
-            how_many = inp.ask_for(
-                '\n: ', 'Error', str).lower()
-
-            if how_many == 'y':
-                num_files = inp.ask_for(
-                    '\nHow many files do you have that need to be uploaded?: ', 'Not the right data type.', _type=int)
-                if num_files > 25:
-                    print(
-                        'Sorry, the [red]number of files[/red] cannot be over 25.')
-
-                elif num_files <= 25:
-                    for _ in range(num_files):
-                        # For every file the user needs to upload, it calls the upload function.
-                        upload()
-                        invalid = False
-
-            elif how_many == 'n':
-                # Uploads only one file.
-                upload()
-                invalid = False
-    rerun()
-
-    # * Asks the user if they have any more images they want to upload to nova.astrometry.net
-    # * If not it terminates the program.
-    print('\nDo you have any [bold blue]more images[/] to be uploaded? '
-          '(y/n)')
-    repeat = inp.ask_for('\n: ', 'Error', str).lower()
-
-    if repeat == 'y':
-        upload()
-        rerun()
-    if repeat == 'n':
-        print('\n********************'
-              ' [bold blue]End of program[/] '
-              '********************')
+    # For pixel coordinates.
+    print('\nWould you like to find the pixel coordinates from the plate solved image from https://nova.astrometry.net ? (y/n)')
+    find_coords = inp.ask_for('\n: ', 'error', str).lower()
+    if find_coords[0] == 'y':
+        m.find_px_coords(m.find_image())
+    elif find_coords[0] == 'n':
+        print('\n[bold blue]End of program[/]')
