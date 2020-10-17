@@ -6,7 +6,6 @@ those coordinates to pixel coordinates within the image and get them back to you
 
 import os
 import webbrowser
-import time
 from astroquery.astrometry_net import AstrometryNet
 from astroquery.simbad import Simbad
 from rich import print
@@ -93,81 +92,85 @@ class InputsAndRedirects():
 inp = InputsAndRedirects()
 
 
-class main():
-    ################################################################################################################################################################
+def find_image():
+    look_for = True
 
-    def find_image(self):
-        look_for = True
-
-        while look_for:
+    while look_for:
                 # * Asks for the directory of the FITS file.
-            print('\n-------------------------------------------------------')
-            print('What is the path to the image file or directory?')
-            print(
-                'Please make sure the file [bold blue]ends in .FITS, JPEG, or .PNG[/]')
-            print('-------------------------------------------------------')
+        print('\n-------------------------------------------------------')
+        print('What is the path to the image file or directory?')
+        print(
+            'Please make sure the file [bold blue]ends in .FITS, JPEG, or .PNG[/]')
+        print('-------------------------------------------------------')
 
-            print(
-                '\nYou can put in a path for a directory or file. \n(  Directory EX: /Users/user/Pictures | File EX: /Users/user/Pictures/Kepler-1b.FITS )')
-            print('\nTo [bold blue]copy a file path[/] on Mac right click on the file or directory \nthen hold alt, then select [bold blue]copy as pathname[/].')
-            dir_or_file = inp.ask_for('\n: ', _type=str)
+        print(
+            '\nYou can put in a path for a directory or file. \n(  Directory EX: /Users/user/Pictures | File EX: /Users/user/Pictures/Kepler-1b.FITS )')
+        print('\nTo [bold blue]copy a file path[/] on Mac right click on the file or directory \nthen hold alt, then select [bold blue]copy as pathname[/].')
+        dir_or_file = inp.ask_for('\n: ', _type=str)
 
-            # * Supported file extensions (mainly those just supported by astrometry.net)
-            file_extensions = ['.FITS', '.JPEG', '.PNG',
-                               '.FIT', '.fits', '.fit', '.fts']
+        # * Supported file extensions (mainly those just supported by astrometry.net)
+        file_extensions = ['.FITS', '.JPEG', '.PNG',
+                           '.FIT', '.fits', '.fit', '.fts']
 
-            #  File counter
-            counter = 0
+        #  File counter
+        counter = 0
 
-            # * Given path is directory
-            if os.path.isdir(dir_or_file):
+        # * Given path is directory
+        if os.path.isdir(dir_or_file):
                 #  For every file in the directory print out how many there are.
-                for file_name in os.listdir(dir_or_file):
-                    counter += 1
-                    print(f'\nFile {counter}: ')
-                    #  Checks if the file is one of the supported file extensions.
-                    if file_name.endswith(tuple(file_extensions)):
+            for file_name in os.listdir(dir_or_file):
+                counter += 1
+                print(f'\nFile {counter}: ')
+                #  Checks if the file is one of the supported file extensions.
+                if file_name.endswith(tuple(file_extensions)):
                         #  Prints out file path
-                        print(
-                            f'{os.path.join(dir_or_file)}/{file_name}')
+                    print(
+                        f'{os.path.join(dir_or_file)}/{file_name}')
 
-                        look_for = False
-                #  Asks for the image they want to upload.
-                print(
-                    '\n-------------------------------------------------------------------------------------------')
-                print(
-                    'Which [bold blue]image[/] would you like to [bold blue]upload[/]? (One of the paths above)')
-                not_file = True
-                while not_file:
-                    upload_image = inp.ask_for(': ', _type=str)
-
-                    # * Checks that the path given is a file
-                    if os.path.isfile(upload_image):
-                        not_file = False
-                    else:
-                        print(
-                            '\nPlease [bold blue]re-enter[/] the path, the one you gave was invalid.')
-                        print(
-                            'If you accidentally put in / , just go into Finder and copy the file as a pathname, then paste it here.')
-                print(
-                    '-------------------------------------------------------------------------------------------')
-                # Unbound ( might not return anything )
-                return upload_image
-
-            # * Given path is file
-            if os.path.isfile(dir_or_file):
-
-                # * Finds out if the file is one of the supported file extensions.
-                if dir_or_file.endswith(tuple(file_extensions)):
-
-                    # * Prints out path and breaks out of loop.
-                    print(f'\n{os.path.join(dir_or_file)}')
                     look_for = False
-                    return dir_or_file
+            #  Asks for the image they want to upload.
+            print(
+                '\n-------------------------------------------------------------------------------------------')
+            print(
+                'Which [bold blue]image[/] would you like to [bold blue]upload[/]? (One of the paths above)')
+            not_file = True
+            while not_file:
+                upload_image = inp.ask_for(': ', _type=str)
+
+                # * Checks that the path given is a file
+                if os.path.isfile(upload_image):
+                    not_file = False
+                else:
+                    print(
+                        '\nPlease [bold blue]re-enter[/] the path, the one you gave was invalid.')
+                    print(
+                        'If you accidentally put in / , just go into Finder and copy the file as a pathname, then paste it here.')
+            print(
+                '-------------------------------------------------------------------------------------------')
+            # Unbound ( might not return anything )
+            return upload_image
+
+        # * Given path is file
+        if os.path.isfile(dir_or_file):
+
+            # * Finds out if the file is one of the supported file extensions.
+            if dir_or_file.endswith(tuple(file_extensions)):
+
+                # * Prints out path and breaks out of loop.
+                print(f'\n{os.path.join(dir_or_file)}')
+                look_for = False
+                return dir_or_file
+
+
+class main():
+
+    def __init__(self, image, new_image):
+        self.image = image
+        self.new_image = new_image
 
     ################################################################################################################################################################
 
-    def upload_image(self, image):
+    def upload_image(self):
         # * Creating instance of astrometry.net and API key
         ast = AstrometryNet()
         ast.api_key = 'bchkvzadjuswddhg'
@@ -179,7 +182,7 @@ class main():
             try:
                 if not submission_id:
                     # * Solves the image from the file path
-                    wcs_header = ast.solve_from_image(f'{image}', force_image_upload=True,
+                    wcs_header = ast.solve_from_image(f'{self.image}', force_image_upload=True,
                                                       submission_id=submission_id, solve_timeout=1000)
                 else:
                     # * Time is in seconds.
@@ -211,7 +214,7 @@ class main():
 
     ################################################################################################################################################################
 
-    def find_px_coords(self, new_image):
+    def find_px_coords(self):
         search_for_ra_dec = True
         while search_for_ra_dec:
 
@@ -255,7 +258,7 @@ class main():
                         '\nPlease put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
                     print('It should be titled [bold blue]new-image.fits[/].')
                     # * Runs the find_fits_dir function to determine the path to check the image.
-                    filename = new_image
+                    filename = self.new_image
 
                     # Opens the file and looks at header data
                     hdu = fits.open(filename)
@@ -284,13 +287,13 @@ class main():
 
 
 if __name__ == "__main__":
-    m = main()
-    m.upload_image(m.find_image())
+    m = main(find_image(), find_image())
+    m.upload_image()
 
     # For pixel coordinates.
     print('\nWould you like to find the pixel coordinates from the plate solved image from https://nova.astrometry.net ? (y/n)')
     find_coords = inp.ask_for('\n: ', 'error', str).lower()
     if find_coords[0] == 'y':
-        m.find_px_coords(m.find_image())
+        m.find_px_coords(find_image())
     elif find_coords[0] == 'n':
         print('\n[bold blue]End of program[/]')
