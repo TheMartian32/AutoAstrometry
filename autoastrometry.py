@@ -13,7 +13,7 @@ from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy.wcs import WCS
 
-# Helper functions
+# Helper functions ( basically everything outside the FITSU class )
 
 
 def ask_for(prompt, error_msg=None, _type=None):
@@ -104,7 +104,7 @@ def find_image():
         print('-------------------------------------------------------')
 
         print(
-            '\nYou can put in a path for a directory or file. \n(  Directory EX: /Users/user/Pictures | File EX: /Users/user/Pictures/Kepler-1b.FITS )')
+            '\nYou can put in a path for a directory or file. \n( Directory EX: /Users/user/Pictures | File EX: /Users/user/Pictures/Kepler-1b.FITS )')
         print('\nTo [bold blue]copy a file path[/] on Mac right click on the file or directory \nthen hold alt, then select [bold blue]copy as pathname[/].')
         dir_or_file = ask_for('\n: ', _type=str)
 
@@ -198,8 +198,10 @@ class FITSUploader():
             #  Code to execute when solve succeeds
             print('\nSuccess! :thumbs_up:')
             print(
-                '\nTo get the most possible information out of your image please go to the website below.')
+                '\nTo get the most possible information out of your image please visit the website below.')
             redirect_to('http://nova.astrometry.net/users/20995')
+
+            print('\n*********************************************************************************************************************************************')
 
             # Looks up target with astroquery then can inp.redirect_to user to the website
             # to use the aladin lite view to find comp stars, look around, etc.
@@ -211,15 +213,21 @@ class FITSUploader():
 
         # do other shit here
     def find_px_coords(self, solved_image):
-        while True:
+        not_radec = True
+        while not_radec:
             try:
                 # * Uses SkyCoord to verify correct RA and Declinaction values
+                print('\n*********************************************************************************************************************************************')
                 print(
-                    '\n[bold blue]Right Ascension[/] and [bold blue]Declination[/] for your target.')
+                    '[bold blue]Right Ascension[/] and [bold blue]Declination[/] for your target.')
                 print(
                     'Enter the values [bold]one at a time[/]. ( EX: 19 ( hit enter ), 07 ( hit enter ), 14 ( hit enter )')
                 print('The same applies for [bold blue]Declination values[/].')
+                print('*********************************************************************************************************************************************')
+
                 #  RA
+                print('\n*********************************************************************************************************************************************')
+
                 ra1 = ask_for('\n: ', _type=int)
                 ra2 = ask_for(': ', _type=int)
                 ra3 = ask_for(': ', _type=int)
@@ -229,6 +237,7 @@ class FITSUploader():
                 dec1 = ask_for('\n: ', _type=int)
                 dec2 = ask_for(': ', _type=int)
                 dec3 = ask_for(': ', _type=int)
+                print('*********************************************************************************************************************************************')
 
                 #! Just keeping this here to ensure that the right values for RA and Dec are correct.
                 c = SkyCoord(f'{ra1}h{ra2}m{ra3}s',
@@ -240,46 +249,58 @@ class FITSUploader():
                 print('Please [bold blue]re-enter your RA and Dec[/]')
             else:
                 # Got a result so break out of loop
-                break
+                not_radec = False
 
-        while True:
-            try:
-                # * Asks user to put in the path to the plate solved image from https://nova.astrometry.net.
-                print(
-                    '\nPlease put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
-                print('It should be titled [bold blue]new-image.fits[/].')
-                filename = solved_image
+        def pixel_pos():
+            not_image = True
+            while not_image:
+                try:
+                    # * Asks user to put in the path to the plate solved image from https://nova.astrometry.net.
+                    print('\n*********************************************************************************************************************************************')
+                    print(
+                        'Please put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
+                    print('It should be titled [bold blue]new-image.fits[/].')
+                    print('*********************************************************************************************************************************************')
 
-                # Opens the file and looks at header data
-                hdu = fits.open(filename)
-                header = hdu[0].header
+                    filename = solved_image
 
-                #  Applies WCS to header ( world coordinate system ). Also checks that the RA and Dec values are in fk5.
-                wcs = WCS(header)
-                coord = SkyCoord(
-                    f'{ra1}h{ra2}m{ra3}s {dec1}d{dec2}m{dec3}s', frame='fk5')
+                    # Opens the file and looks at header data
+                    hdu = fits.open(filename)
+                    header = hdu[0].header
 
-                # * Converts the RA and Dec values to pixel values within the image. It then also prints them out.
-                px = wcs.world_to_pixel(coord)
-                print('\nPixel coordinates:')
-                return print(px)
-            except:
-                #  File that was given was not the plate solved image from https://nova.astrometry.net.
-                print(
-                    '\nPlease put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
-            else:
-                # Got correct result so break out of loop
-                break
+                    #  Applies WCS to header ( world coordinate system ). Also checks that the RA and Dec values are in fk5.
+                    wcs = WCS(header)
+                    coord = SkyCoord(
+                        f'{ra1}h{ra2}m{ra3}s {dec1}d{dec2}m{dec3}s', frame='fk5')
+
+                    # * Converts the RA and Dec values to pixel values within the image. It then also prints them out.
+                    px = wcs.world_to_pixel(coord)
+                    print('\n*********************************************************************************************************************************************')
+                    print('Pixel coordinates:')
+                    print(px)
+                    print('*********************************************************************************************************************************************')
+                    return px
+
+                except:
+                    #  File that was given was not the plate solved image from https://nova.astrometry.net.
+                    print(
+                        '\nPlease put in the [bold blue]plate solved image[/] from https://nova.astrometry.net.')
+                else:
+                    # Got correct result so break out of loop
+                    not_image = False
+        pixel_pos()
 
 
 if __name__ == "__main__":
+    print('\n[bold blue]Following prompt is for the image to be uploaded to https://nova.astrometry.net[/]')
     fitsu = FITSUploader(find_image())
     fitsu.upload_file()
 
     find_coords = ask_for(
-        '\nWould you like to find the pixel coordinates of your target? ( IMPORTANT: You must use the image from astrometry.net  y/n ): ', 'error, put in string', str).lower()
+        'Would you like to find the pixel coordinates of your target? ( IMPORTANT: You must use the image from astrometry.net  y/n ): ', 'error, put in string', str).lower()
+    print('*********************************************************************************************************************************************')
 
     if find_coords[0] == 'y':
         fitsu.find_px_coords(find_image())
     elif find_coords[0] == 'n':
-        print('\n*************\nEnd of program\n*************')
+        print('\n**************\n[bold blue]End of program[/]\n**************')
