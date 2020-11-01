@@ -6,6 +6,7 @@ those coordinates to pixel coordinates within the image and get them back to you
 
 import os
 import webbrowser
+from astropy.wcs.wcsapi.fitswcs import SlicedFITSWCS
 from astroquery.astrometry_net import AstrometryNet
 from astroquery.simbad import Simbad
 from rich import print
@@ -290,6 +291,20 @@ class FITSUploader():
                     not_image = False
         pixel_pos()
 
+    def check_comp_stars(self):
+        comp_stars = ask_for(
+            '\nDo you have any comparison stars you would like to get the pixel coordinates from? (y/n): ', 'Not a yes or no', str).lower()
+        if comp_stars[0] == 'y':
+            num_comp_stars = ask_for(
+                '\nHow many comparison stars do you have? ( Integer )', 'Not an integer.', int)
+            counter = 0
+            for _ in range(num_comp_stars):
+                counter += 1
+                print(f'\n[bold blue]Comparison star {counter}[/]:')
+                fitsu.find_px_coords(find_image())
+        elif comp_stars[0] == 'n':
+            print('\nContinuing...')
+
 
 if __name__ == "__main__":
     print('\n[bold blue]Following prompt is for the image to be uploaded to https://nova.astrometry.net[/]')
@@ -302,5 +317,7 @@ if __name__ == "__main__":
 
     if find_coords[0] == 'y':
         fitsu.find_px_coords(find_image())
+        fitsu.check_comp_stars()
+        print('\n**************\n[bold blue]End of program[/]\n**************')
     elif find_coords[0] == 'n':
         print('\n**************\n[bold blue]End of program[/]\n**************')
